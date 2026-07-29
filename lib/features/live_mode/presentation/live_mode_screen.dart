@@ -518,19 +518,26 @@ class _TimerLabel extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 12),
     child: Column(
+      mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
           '${_two(elapsed.inMinutes)}:${_two(elapsed.inSeconds % 60)}'
           '${plannedMinutes == null ? '' : ' / $plannedMinutes Min.'}',
-          style: TextStyle(color: foreground, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: foreground,
+            fontSize: 12,
+            height: 1.1,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         Text(
           'Rest ca. ${remaining.inMinutes + 1} Min.',
           style: TextStyle(
             color: foreground.withValues(alpha: 0.6),
-            fontSize: 11,
+            fontSize: 10,
+            height: 1.1,
           ),
         ),
       ],

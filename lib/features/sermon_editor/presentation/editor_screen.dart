@@ -1304,6 +1304,7 @@ class _MetadataInspector extends StatelessWidget {
     ContentKind.sermon => 'Predigt',
     ContentKind.talk => 'Vortrag',
     ContentKind.shortTopic => 'Kurzthema',
+    ContentKind.introduction => 'Einleitung',
   };
 
   String _typeName(SermonType type) => switch (type) {

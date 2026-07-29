@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
+import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:sermonary/app/app.dart';
 import 'package:sermonary/app/providers.dart';
 import 'package:sermonary/core/database/app_database.dart';
@@ -10,7 +11,7 @@ import 'package:sermonary/core/database/app_database.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('happy path from library through writing to live mode', (
+  testWidgets('happy path through split writing and live mode', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1440, 900));
@@ -30,37 +31,42 @@ void main() {
 
     await tester.tap(find.byKey(const Key('new-sermon')));
     await tester.pumpAndSettle();
-    expect(find.text('Gliederung'), findsOneWidget);
+    expect(find.text('Auslegungspredigt'), findsOneWidget);
 
+    final sermonId =
+        (await database.select(database.sermonRows).get()).single.id;
     await tester.enterText(
-      find.byKey(
-        ValueKey(
-          'title-${(await database.select(database.sermonRows).get()).single.id}',
-        ),
-      ),
+      find.byKey(ValueKey('title-$sermonId')),
       'Happy-Path-Predigt',
     );
-    await tester.tap(find.byKey(const Key('add-first-raw-point')));
-    await tester.pump();
-    final rawField = find.byWidgetPredicate(
-      (widget) =>
-          widget is TextField && widget.key.toString().contains('raw-line'),
-    );
-    await tester.enterText(rawField.first, 'Ein klarer Hauptpunkt');
+    await tester.tap(find.text('Speichern'));
+    await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Script'));
+    await tester.tap(find.byIcon(LucideIcons.notebookPen));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Block'));
+    await tester.tap(find.textContaining('Stichpunkt hinzufügen'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Absatz').last);
-    await tester.pump();
     await tester.enterText(
-      find.widgetWithText(TextField, 'Schreiben …'),
+      find.byType(TextField).last,
+      'Ein klarer Hauptpunkt',
+    );
+
+    await tester.tap(find.byIcon(LucideIcons.scrollText));
+    await tester.pumpAndSettle();
+    expect(find.text('SKRIPT'), findsOneWidget);
+    expect(find.text('NOTIZEN'), findsOneWidget);
+
+    await tester.tap(find.byIcon(LucideIcons.scrollText));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Absatz hinzufügen'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextField).last,
       'Ausformulierter Text.',
     );
 
     await tester.pump(const Duration(seconds: 1));
-    await tester.tap(find.byTooltip('Livemode (⌘3)'));
+    await tester.tap(find.byTooltip('Live-Ansicht'));
     await tester.pumpAndSettle();
     expect(find.text('Happy-Path-Predigt'), findsWidgets);
     expect(find.text('Ausformulierter Text.'), findsOneWidget);

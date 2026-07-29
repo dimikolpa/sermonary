@@ -332,7 +332,7 @@ class _Sidebar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(10, 3, 8, 18),
+            padding: const EdgeInsets.fromLTRB(2, 3, 2, 18),
             child: Row(
               children: [
                 Icon(

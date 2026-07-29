@@ -3,7 +3,7 @@ import 'package:sermonary/features/sermon_editor/domain/sermon_document.dart';
 
 enum SermonStatus { draft, inProgress, ready, preached, archived }
 
-enum ContentKind { sermon, talk, shortTopic }
+enum ContentKind { sermon, talk, shortTopic, introduction }
 
 enum SermonType {
   expository,

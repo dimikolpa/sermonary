@@ -38,6 +38,9 @@ dependencies:
   go_router: ^17.3.0
   intl: ^0.20.3
   json_annotation: ^4.12.0
+  lucide_flutter: ^1.25.0
+  pdf: ^3.13.0
+  printing: ^5.15.0
   uuid: ^4.6.0
 
 dev_dependencies:
@@ -60,6 +63,21 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/images/sermonary-logo.png
+
+  fonts:
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/DMSans-Variable.ttf
+        - asset: assets/fonts/DMSans-Italic-Variable.ttf
+          style: italic
+    - family: Literata
+      fonts:
+        - asset: assets/fonts/Literata-Variable.ttf
+        - asset: assets/fonts/Literata-Italic-Variable.ttf
+          style: italic
 
   # To add assets to your application, add an assets section, like this:
   # assets:

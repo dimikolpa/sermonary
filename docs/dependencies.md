@@ -1,6 +1,6 @@
 # Zentrale Abhängigkeiten
 
-Die Versionen entsprechen der Auflösung am 28. Juli 2026 mit Flutter 3.44.6 und
+Die Versionen entsprechen der Auflösung am 29. Juli 2026 mit Flutter 3.44.6 und
 Dart 3.12.2.
 
 | Paket | Version | Zweck und Wahl | Ersatz | Plattformen |
@@ -18,6 +18,17 @@ Dart 3.12.2.
 | drift_dev | 2.34.x | Drift-Schema-/Mapper-Generierung | manuelle SQL-Schicht | Entwicklung |
 | very_good_analysis | 10.3.0 | strenge, gepflegte Lints | flutter_lints | Entwicklung |
 | integration_test | Flutter SDK | nativer Happy-Path | Patrol oder eigene Driver | Flutter-Zielplattformen |
+| lucide_flutter | 1.25.0 | dieselbe reduzierte Lucide-Iconsprache wie im Figma-Entwurf | eigene SVG-Icons, Material Symbols | alle |
+| pdf | 3.13.0 | plattformunabhängige, lokal erzeugte Druckdokumente | HTML-Drucklayout, eigener PDF-Renderer | alle |
+| printing | 5.15.0 | native Druck- und PDF-Vorschau auf Basis des erzeugten Dokuments | plattformspezifische Druckadapter | macOS, iOS, Android, Windows, Linux, Web |
+
+## Lokale Schriften
+
+DM Sans und Literata werden als variable TrueType-Dateien mit der Anwendung
+ausgeliefert. Dadurch bleibt das Erscheinungsbild offline identisch und es
+werden beim Schreiben keine Webfonts nachgeladen. Beide Schriftfamilien stammen
+aus dem offiziellen Google-Fonts-Repository und stehen unter der SIL Open Font
+License 1.1; die Lizenztexte liegen unter `assets/licenses/`.
 
 ## Versionshinweis
 

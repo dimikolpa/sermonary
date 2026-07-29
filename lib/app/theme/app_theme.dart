@@ -15,8 +15,11 @@ abstract final class AppRadius {
 }
 
 abstract final class AppSizes {
-  static const sidebarWidth = 220.0;
-  static const editorWidth = 660.0;
+  static const sidebarWidth = 172.0;
+  static const entryListWidth = 210.0;
+  static const editorWidth = 620.0;
+  static const outlineWidth = 580.0;
+  static const splitWidth = 1160.0;
   static const compactBreakpoint = 720.0;
   static const expandedBreakpoint = 1100.0;
 }
@@ -29,16 +32,22 @@ abstract final class AppMotion {
 abstract final class AppColors {
   static const seed = Color(0xFF77736A);
   static const paper = Color(0xFFF9F8F5);
-  static const sidebar = Color(0xFFF4F3EF);
+  static const sidebar = Color(0xFFF3F2EE);
   static const ink = Color(0xFF1C1B18);
   static const darkPaper = Color(0xFF1A1917);
   static const darkInk = Color(0xFFE5E3DC);
-  static const error = Color(0xFF9A413A);
+  static const muted = Color(0xFFEAEAE6);
+  static const mutedForeground = Color(0xFF8A8980);
+  static const darkSidebar = Color(0xFF201F1B);
+  static const darkMuted = Color(0xFF2A2825);
+  static const darkMutedForeground = Color(0xFF7A7872);
+  static const highlight = Color(0xFFFCD61C);
+  static const error = Color(0xFFB94A3B);
 }
 
 abstract final class AppTypography {
-  static const ui = '.AppleSystemUIFont';
-  static const editor = 'Georgia';
+  static const ui = 'DM Sans';
+  static const editor = 'Literata';
 }
 
 ThemeData buildTheme(Brightness brightness) {
@@ -51,19 +60,21 @@ ThemeData buildTheme(Brightness brightness) {
     surface: dark ? AppColors.darkPaper : AppColors.paper,
     onSurface: dark ? AppColors.darkInk : AppColors.ink,
     surfaceContainerLowest: dark
-        ? const Color(0xFF171614)
+        ? AppColors.darkPaper
         : const Color(0xFFFCFBF8),
-    surfaceContainerLow: dark ? const Color(0xFF1E1D1A) : AppColors.sidebar,
-    surfaceContainer: dark ? const Color(0xFF23211E) : const Color(0xFFF0EFEB),
-    outline: dark ? const Color(0xFF37342F) : const Color(0xFFE1DFD8),
-    outlineVariant: dark ? const Color(0xFF2D2B27) : const Color(0xFFEAE8E2),
+    surfaceContainerLow: dark ? AppColors.darkSidebar : AppColors.sidebar,
+    surfaceContainer: dark ? AppColors.darkMuted : AppColors.muted,
+    outline: dark
+        ? AppColors.darkInk.withValues(alpha: 0.07)
+        : AppColors.ink.withValues(alpha: 0.08),
+    outlineVariant: dark
+        ? AppColors.darkInk.withValues(alpha: 0.07)
+        : AppColors.ink.withValues(alpha: 0.08),
     primary: dark ? AppColors.darkInk : AppColors.ink,
     onPrimary: dark ? AppColors.ink : AppColors.paper,
-    primaryContainer: dark ? const Color(0xFF302E29) : const Color(0xFFEAE8E2),
+    primaryContainer: dark ? AppColors.darkMuted : AppColors.muted,
     onPrimaryContainer: dark ? AppColors.darkInk : AppColors.ink,
-    secondaryContainer: dark
-        ? const Color(0xFF292824)
-        : const Color(0xFFEDECE8),
+    secondaryContainer: dark ? AppColors.darkMuted : AppColors.muted,
     error: AppColors.error,
   );
   final textTheme = Typography.material2021().black.apply(

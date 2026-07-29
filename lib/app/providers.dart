@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sermonary/core/database/app_database.dart';
 import 'package:sermonary/features/bible/domain/bible_provider.dart';
@@ -13,6 +14,8 @@ final databaseProvider = Provider<AppDatabase>((ref) {
   ref.onDispose(database.close);
   return database;
 });
+
+final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
 
 final sermonRepositoryProvider = Provider<SermonRepository>(
   (ref) => DriftSermonRepository(ref.watch(databaseProvider)),

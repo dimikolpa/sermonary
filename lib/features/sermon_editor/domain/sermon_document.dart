@@ -12,6 +12,45 @@ enum ParagraphRole {
 
 enum NoteVisibility { editorOnly, liveMode, always }
 
+class InlineMark {
+  const InlineMark({
+    required this.start,
+    required this.end,
+    this.bold = false,
+    this.italic = false,
+    this.highlighted = false,
+  });
+
+  final int start;
+  final int end;
+  final bool bold;
+  final bool italic;
+  final bool highlighted;
+
+  Map<String, Object?> toJson() => {
+    'start': start,
+    'end': end,
+    'bold': bold,
+    'italic': italic,
+    'highlighted': highlighted,
+  };
+
+  factory InlineMark.fromJson(Map<String, Object?> json) => InlineMark(
+    start: json['start']! as int,
+    end: json['end']! as int,
+    bold: json['bold'] as bool? ?? false,
+    italic: json['italic'] as bool? ?? false,
+    highlighted: json['highlighted'] as bool? ?? false,
+  );
+}
+
+List<InlineMark> _marksFromJson(Object? value) => value == null
+    ? const []
+    : (value as List<Object?>)
+          .cast<Map<String, Object?>>()
+          .map(InlineMark.fromJson)
+          .toList(growable: false);
+
 sealed class DocumentBlock {
   const DocumentBlock({
     required this.id,
@@ -55,6 +94,7 @@ sealed class DocumentBlock {
         ),
         isBold: json['isBold'] as bool? ?? false,
         isItalic: json['isItalic'] as bool? ?? false,
+        marks: _marksFromJson(json['marks']),
         createdAt: createdAt,
         updatedAt: updatedAt,
       ),
@@ -86,6 +126,7 @@ sealed class DocumentBlock {
         text: json['text']! as String,
         author: json['author']! as String,
         source: json['source']! as String,
+        marks: _marksFromJson(json['marks']),
         createdAt: createdAt,
         updatedAt: updatedAt,
       ),
@@ -95,6 +136,8 @@ sealed class DocumentBlock {
         visibility: NoteVisibility.values.byName(
           json['visibility']! as String,
         ),
+        depth: json['depth'] as int? ?? 0,
+        marks: _marksFromJson(json['marks']),
         createdAt: createdAt,
         updatedAt: updatedAt,
       ),
@@ -165,11 +208,13 @@ class ParagraphBlock extends DocumentBlock {
     required super.updatedAt,
     this.isBold = false,
     this.isItalic = false,
+    this.marks = const [],
   });
   final String text;
   final ParagraphRole semanticRole;
   final bool isBold;
   final bool isItalic;
+  final List<InlineMark> marks;
   @override
   String get type => 'paragraph';
   @override
@@ -181,6 +226,7 @@ class ParagraphBlock extends DocumentBlock {
     'semanticRole': semanticRole.name,
     'isBold': isBold,
     'isItalic': isItalic,
+    'marks': marks.map((mark) => mark.toJson()).toList(growable: false),
   };
 }
 
@@ -289,10 +335,12 @@ class QuoteBlock extends DocumentBlock {
     required this.source,
     required super.createdAt,
     required super.updatedAt,
+    this.marks = const [],
   });
   final String text;
   final String author;
   final String source;
+  final List<InlineMark> marks;
   @override
   String get type => 'quote';
   @override
@@ -303,6 +351,7 @@ class QuoteBlock extends DocumentBlock {
     'text': text,
     'author': author,
     'source': source,
+    'marks': marks.map((mark) => mark.toJson()).toList(growable: false),
   };
 }
 
@@ -313,9 +362,13 @@ class NoteBlock extends DocumentBlock {
     required this.visibility,
     required super.createdAt,
     required super.updatedAt,
+    this.depth = 0,
+    this.marks = const [],
   });
   final String text;
   final NoteVisibility visibility;
+  final int depth;
+  final List<InlineMark> marks;
   @override
   String get type => 'note';
   @override
@@ -325,6 +378,8 @@ class NoteBlock extends DocumentBlock {
     ...baseJson(),
     'text': text,
     'visibility': visibility.name,
+    'depth': depth,
+    'marks': marks.map((mark) => mark.toJson()).toList(growable: false),
   };
 }
 

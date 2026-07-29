@@ -24,6 +24,10 @@ void main() {
           text: 'Gnade trägt durch jeden neuen Tag.',
           semanticRole: ParagraphRole.application,
           isBold: true,
+          marks: const [
+            InlineMark(start: 0, end: 5, bold: true),
+            InlineMark(start: 6, end: 11, highlighted: true),
+          ],
           createdAt: now,
           updatedAt: now,
         ),
@@ -31,6 +35,8 @@ void main() {
           id: 'note',
           text: 'Pause',
           visibility: NoteVisibility.editorOnly,
+          depth: 1,
+          marks: const [InlineMark(start: 0, end: 5, italic: true)],
           createdAt: now,
           updatedAt: now,
         ),
@@ -46,6 +52,9 @@ void main() {
     expect(decoded.blocks, hasLength(3));
     expect(decoded.blocks[1], isA<ParagraphBlock>());
     expect((decoded.blocks[1] as ParagraphBlock).isBold, isTrue);
+    expect((decoded.blocks[1] as ParagraphBlock).marks, hasLength(2));
+    expect((decoded.blocks[2] as NoteBlock).depth, 1);
+    expect((decoded.blocks[2] as NoteBlock).marks.single.italic, isTrue);
     expect(jsonEncode(decoded.toJson()), encoded);
   });
 
