@@ -26,8 +26,8 @@ class _LiveModeScreenState extends ConsumerState<LiveModeScreen> {
   bool _running = false;
   bool _dark = false;
   bool _showOutline = true;
-  double _fontSize = 26;
-  double _maxWidth = 900;
+  double _fontSize = 24;
+  double _maxWidth = 760;
   double _progress = 0;
 
   @override
@@ -66,10 +66,8 @@ class _LiveModeScreenState extends ConsumerState<LiveModeScreen> {
   }
 
   Widget _buildLive(BuildContext context, Sermon sermon) {
-    final background = _dark
-        ? const Color(0xFF111311)
-        : const Color(0xFFFBF8F1);
-    final foreground = _dark ? const Color(0xFFF0EEE7) : AppColors.ink;
+    final background = _dark ? AppColors.darkPaper : AppColors.paper;
+    final foreground = _dark ? AppColors.darkInk : AppColors.ink;
     final remainingWords = (sermon.document.wordCount * (1 - _progress))
         .round();
     final remaining = Duration(
@@ -99,7 +97,11 @@ class _LiveModeScreenState extends ConsumerState<LiveModeScreen> {
             ),
             title: Text(
               sermon.title,
-              style: TextStyle(color: foreground, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: foreground.withValues(alpha: 0.7),
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
             actions: [
               _TimerLabel(
@@ -171,9 +173,7 @@ class _LiveModeScreenState extends ConsumerState<LiveModeScreen> {
                 SizedBox(
                   width: 260,
                   child: ColoredBox(
-                    color: _dark
-                        ? const Color(0xFF1B1E1B)
-                        : const Color(0xFFF0ECE3),
+                    color: _dark ? const Color(0xFF1E1D1A) : AppColors.sidebar,
                     child: _LiveOutline(
                       document: sermon.document,
                       foreground: foreground,
@@ -186,7 +186,7 @@ class _LiveModeScreenState extends ConsumerState<LiveModeScreen> {
                   controller: _scrollController,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 60,
-                    vertical: 80,
+                    vertical: 96,
                   ),
                   child: Center(
                     child: ConstrainedBox(
@@ -198,10 +198,11 @@ class _LiveModeScreenState extends ConsumerState<LiveModeScreen> {
                             Text(
                               sermon.title,
                               style: TextStyle(
+                                fontFamily: AppTypography.editor,
                                 color: foreground,
-                                fontSize: _fontSize * 1.8,
-                                height: 1.15,
-                                fontWeight: FontWeight.w700,
+                                fontSize: _fontSize * 1.65,
+                                height: 1.2,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             if (sermon.subtitle.isNotEmpty) ...[
@@ -209,6 +210,7 @@ class _LiveModeScreenState extends ConsumerState<LiveModeScreen> {
                               Text(
                                 sermon.subtitle,
                                 style: TextStyle(
+                                  fontFamily: AppTypography.editor,
                                   color: foreground.withValues(alpha: 0.7),
                                   fontSize: _fontSize,
                                 ),
@@ -292,6 +294,7 @@ class _LiveBlock extends StatelessWidget {
       TitleBlock(:final text) => Text(
         text,
         style: TextStyle(
+          fontFamily: AppTypography.editor,
           fontSize: fontSize * 1.7,
           height: 1.2,
           color: foreground,
@@ -301,6 +304,7 @@ class _LiveBlock extends StatelessWidget {
       HeadingBlock(:final text, :final level) => Text(
         text,
         style: TextStyle(
+          fontFamily: AppTypography.editor,
           fontSize:
               fontSize *
               (level == 1
@@ -316,8 +320,9 @@ class _LiveBlock extends StatelessWidget {
       ParagraphBlock(:final text, :final isBold, :final isItalic) => Text(
         text,
         style: TextStyle(
+          fontFamily: AppTypography.editor,
           fontSize: fontSize,
-          height: 1.6,
+          height: 1.82,
           color: foreground,
           fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
@@ -345,8 +350,9 @@ class _LiveBlock extends StatelessWidget {
               Text(
                 text,
                 style: TextStyle(
+                  fontFamily: AppTypography.editor,
                   fontSize: fontSize * 1.05,
-                  height: 1.65,
+                  height: 1.82,
                   color: foreground,
                   fontStyle: FontStyle.italic,
                 ),
@@ -366,8 +372,9 @@ class _LiveBlock extends StatelessWidget {
       QuoteBlock(:final text, :final author) => Text(
         '„$text“${author.isEmpty ? '' : '\n— $author'}',
         style: TextStyle(
+          fontFamily: AppTypography.editor,
           fontSize: fontSize,
-          height: 1.6,
+          height: 1.82,
           color: foreground.withValues(alpha: 0.85),
           fontStyle: FontStyle.italic,
         ),
@@ -375,6 +382,7 @@ class _LiveBlock extends StatelessWidget {
       NoteBlock(:final text) => Text(
         text,
         style: TextStyle(
+          fontFamily: AppTypography.editor,
           fontSize: fontSize * 0.82,
           color: foreground.withValues(alpha: 0.65),
         ),
@@ -423,8 +431,9 @@ class _LiveBullets extends StatelessWidget {
                     child: Text(
                       item.text,
                       style: TextStyle(
+                        fontFamily: AppTypography.editor,
                         fontSize: fontSize,
-                        height: 1.5,
+                        height: 1.72,
                         color: foreground,
                         fontWeight: depth == 0
                             ? FontWeight.w600

@@ -111,28 +111,32 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     if (!context.mounted) return;
                     context.go('/library');
                   },
-                  icon: const Icon(Icons.arrow_back),
+                  icon: const Icon(Icons.arrow_back, size: 18),
                 ),
                 title: Text(
                   sermon.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 centerTitle: false,
                 actions: [
                   _SaveIndicator(status: _saveStatus),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   SegmentedButton<EditorMode>(
                     segments: const [
                       ButtonSegment(
                         value: EditorMode.raw,
                         label: Text('Raw'),
-                        icon: Icon(Icons.format_list_bulleted, size: 18),
+                        icon: Icon(Icons.format_list_bulleted, size: 15),
                       ),
                       ButtonSegment(
                         value: EditorMode.script,
                         label: Text('Script'),
-                        icon: Icon(Icons.article_outlined, size: 18),
+                        icon: Icon(Icons.article_outlined, size: 15),
                       ),
                     ],
                     selected: {widget.mode},
@@ -143,11 +147,11 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   IconButton(
                     tooltip: 'Livemode (⌘3)',
                     onPressed: _openLive,
-                    icon: const Icon(Icons.play_circle_outline),
+                    icon: const Icon(Icons.play_circle_outline, size: 19),
                   ),
                   PopupMenuButton<String>(
                     tooltip: 'Export',
-                    icon: const Icon(Icons.ios_share_outlined),
+                    icon: const Icon(Icons.ios_share_outlined, size: 18),
                     onSelected: _export,
                     itemBuilder: (context) => const [
                       PopupMenuItem(
@@ -164,7 +168,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     tooltip: 'Inspector',
                     onPressed: () =>
                         setState(() => _showInspector = !_showInspector),
-                    icon: const Icon(Icons.tune),
+                    icon: const Icon(Icons.tune, size: 18),
                   ),
                   const SizedBox(width: 8),
                 ],
@@ -174,11 +178,13 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                   final wide = constraints.maxWidth >= 1050;
                   return Row(
                     children: [
-                      if (_showOutline && wide)
+                      if (_showOutline && wide) ...[
                         SizedBox(
-                          width: 230,
+                          width: AppSizes.sidebarWidth,
                           child: _OutlinePanel(document: sermon.document),
                         ),
+                        const VerticalDivider(width: 1),
+                      ],
                       Expanded(
                         child: widget.mode == EditorMode.raw
                             ? _RawEditor(
@@ -191,14 +197,16 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                                 onInsertBible: _showBibleDialog,
                               ),
                       ),
-                      if (_showInspector && wide)
+                      if (_showInspector && wide) ...[
+                        const VerticalDivider(width: 1),
                         SizedBox(
-                          width: 300,
+                          width: 280,
                           child: _MetadataInspector(
                             sermon: sermon,
                             onChanged: _setSermon,
                           ),
                         ),
+                      ],
                     ],
                   );
                 },
@@ -424,7 +432,7 @@ class _RawEditor extends StatelessWidget {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.xl,
-        vertical: 48,
+        vertical: 64,
       ),
       child: Center(
         child: ConstrainedBox(
@@ -434,7 +442,10 @@ class _RawEditor extends StatelessWidget {
             children: [
               Text(
                 'Gliederung',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontFamily: AppTypography.editor,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -443,7 +454,7 @@ class _RawEditor extends StatelessWidget {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 36),
               if (lines.isEmpty)
                 OutlinedButton.icon(
                   key: const Key('add-first-raw-point'),
@@ -638,13 +649,16 @@ class _RawLineFieldState extends State<_RawLineField> {
                 isDense: true,
                 filled: false,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
               ),
               style: TextStyle(
+                fontFamily: AppTypography.editor,
                 fontSize: widget.line.depth == 0 ? 18 : 16,
                 fontWeight: widget.line.depth == 0
                     ? FontWeight.w600
                     : FontWeight.normal,
-                height: 1.5,
+                height: 1.75,
               ),
               textInputAction: TextInputAction.next,
               onChanged: widget.onTextChanged,
@@ -678,7 +692,7 @@ class _ScriptEditor extends StatelessWidget {
         _FormatBar(onAdd: _addBlock, onInsertBible: onInsertBible),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 42),
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 64),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(
@@ -705,7 +719,7 @@ class _ScriptEditor extends StatelessWidget {
                         onChanged: (next) => _replaceBlock(block.id, next),
                         onDelete: () => _deleteBlock(block.id),
                       ),
-                    const SizedBox(height: 80),
+                    const SizedBox(height: 160),
                   ],
                 ),
               ),
@@ -805,9 +819,14 @@ class _FormatBar extends StatelessWidget {
   final VoidCallback onInsertBible;
   @override
   Widget build(BuildContext context) => Material(
-    color: Theme.of(context).colorScheme.surfaceContainerLow,
+    color: Theme.of(context).colorScheme.surface,
+    shape: Border(
+      bottom: BorderSide(
+        color: Theme.of(context).colorScheme.outlineVariant,
+      ),
+    ),
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -827,7 +846,7 @@ class _FormatBar extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
-                  Icon(Icons.add, size: 18),
+                  Icon(Icons.add, size: 16),
                   SizedBox(width: 6),
                   Text('Block'),
                   Icon(Icons.arrow_drop_down),
@@ -889,25 +908,49 @@ class _ScriptBlockFieldState extends State<_ScriptBlockField> {
       );
     }
     final style = switch (block) {
-      HeadingBlock(level: 1) => Theme.of(context).textTheme.headlineLarge,
-      HeadingBlock(level: 2) => Theme.of(context).textTheme.headlineMedium,
-      HeadingBlock() => Theme.of(context).textTheme.headlineSmall,
-      QuoteBlock() => Theme.of(
+      HeadingBlock(level: 1) => Theme.of(
         context,
-      ).textTheme.bodyLarge?.copyWith(fontStyle: FontStyle.italic),
+      ).textTheme.headlineLarge?.copyWith(fontFamily: AppTypography.editor),
+      HeadingBlock(level: 2) => Theme.of(
+        context,
+      ).textTheme.headlineMedium?.copyWith(fontFamily: AppTypography.editor),
+      HeadingBlock() => Theme.of(
+        context,
+      ).textTheme.headlineSmall?.copyWith(fontFamily: AppTypography.editor),
+      QuoteBlock() =>
+        Theme.of(
+          context,
+        ).textTheme.bodyLarge?.copyWith(
+          fontFamily: AppTypography.editor,
+          fontStyle: FontStyle.italic,
+          fontSize: 18,
+          height: 1.92,
+        ),
       BibleQuoteBlock() => Theme.of(context).textTheme.bodyLarge?.copyWith(
-        color: Theme.of(context).colorScheme.primary,
+        fontFamily: AppTypography.editor,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         fontStyle: FontStyle.italic,
+        fontSize: 18,
+        height: 1.92,
       ),
       NoteBlock() => Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: Theme.of(context).colorScheme.onSecondaryContainer,
       ),
       ParagraphBlock(:final isBold, :final isItalic) =>
         Theme.of(context).textTheme.bodyLarge?.copyWith(
+          fontFamily: AppTypography.editor,
+          fontSize: 18,
+          height: 1.92,
+          letterSpacing: 0.15,
           fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
         ),
-      _ => Theme.of(context).textTheme.bodyLarge,
+      _ => Theme.of(context).textTheme.bodyLarge?.copyWith(
+        fontFamily: AppTypography.editor,
+        fontSize: 18,
+        height: 1.92,
+        letterSpacing: 0.15,
+      ),
     };
     return Card(
       color: block is NoteBlock
@@ -917,7 +960,7 @@ class _ScriptBlockFieldState extends State<_ScriptBlockField> {
           : Colors.transparent,
       shape: const RoundedRectangleBorder(),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(vertical: 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -931,6 +974,8 @@ class _ScriptBlockFieldState extends State<_ScriptBlockField> {
                 decoration: InputDecoration(
                   filled: false,
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   hintText: _hint(block),
                 ),
                 onChanged: (text) => widget.onChanged(_withText(block, text)),
@@ -1047,12 +1092,18 @@ class _OutlinePanel extends StatelessWidget {
     return Material(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(18, 22, 14, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Outline', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 12),
+            Text(
+              'OUTLINE',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w500,
+                letterSpacing: 1.1,
+              ),
+            ),
+            const SizedBox(height: 18),
             Expanded(
               child: entries.isEmpty
                   ? const Text('Überschriften erscheinen hier automatisch.')
@@ -1072,7 +1123,8 @@ class _OutlinePanel extends StatelessWidget {
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 Text(
@@ -1100,10 +1152,16 @@ class _MetadataInspector extends StatelessWidget {
   Widget build(BuildContext context) => Material(
     color: Theme.of(context).colorScheme.surfaceContainerLow,
     child: ListView(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(18, 22, 18, 24),
       children: [
-        Text('Details', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 16),
+        Text(
+          'DETAILS',
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w500,
+            letterSpacing: 1.1,
+          ),
+        ),
+        const SizedBox(height: 18),
         TextFormField(
           key: ValueKey('title-${sermon.id}'),
           initialValue: sermon.title,
@@ -1283,7 +1341,7 @@ class _SaveIndicator extends StatelessWidget {
             SaveStatus.unsaved => Icons.cloud_off_outlined,
             SaveStatus.error => Icons.error_outline,
           },
-          size: 16,
+          size: 14,
           color: status == SaveStatus.error
               ? Theme.of(context).colorScheme.error
               : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -1296,7 +1354,7 @@ class _SaveIndicator extends StatelessWidget {
             SaveStatus.unsaved => 'Nicht gespeichert',
             SaveStatus.error => 'Speicherfehler',
           },
-          style: Theme.of(context).textTheme.labelMedium,
+          style: Theme.of(context).textTheme.labelSmall,
         ),
       ],
     ),

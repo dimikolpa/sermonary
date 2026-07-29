@@ -325,23 +325,33 @@ class _Sidebar extends StatelessWidget {
             .toList()
           ..sort();
     return Container(
-      width: 230,
+      width: AppSizes.sidebarWidth,
       color: Theme.of(context).colorScheme.surfaceContainerLow,
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: const EdgeInsets.fromLTRB(10, 18, 10, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(AppSpacing.sm),
-            child: Text(
-              'Sermonary',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                letterSpacing: -0.4,
-              ),
+            padding: const EdgeInsets.fromLTRB(10, 3, 8, 18),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.edit_outlined,
+                  size: 15,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'SERMONARY',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
           const _SectionLabel(label: 'BIBLIOTHEK'),
           _NavItem(
             icon: Icons.library_books_outlined,
@@ -432,8 +442,8 @@ class _SectionLabel extends StatelessWidget {
       label,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
         color: Theme.of(context).colorScheme.onSurfaceVariant,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.8,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 1.1,
       ),
     ),
   );
@@ -456,7 +466,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+    padding: const EdgeInsets.only(bottom: 2),
     child: Material(
       color: Colors.transparent,
       child: ListTile(
@@ -466,8 +476,11 @@ class _NavItem extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        leading: Icon(icon, size: 19),
-        title: Text(label),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+        minLeadingWidth: 20,
+        horizontalTitleGap: 8,
+        leading: Icon(icon, size: 16),
+        title: Text(label, style: const TextStyle(fontSize: 13)),
         trailing: count == null
             ? null
             : Text('$count', style: Theme.of(context).textTheme.labelSmall),
@@ -508,14 +521,15 @@ class _SermonList extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     children: [
       Padding(
-        padding: const EdgeInsets.fromLTRB(24, 20, 20, 12),
+        padding: const EdgeInsets.fromLTRB(28, 24, 24, 14),
         child: Row(
           children: [
             Expanded(
               child: Text(
                 title,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -0.4,
                 ),
               ),
             ),
@@ -536,15 +550,16 @@ class _SermonList extends StatelessWidget {
         ),
       ),
       Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.fromLTRB(24, 4, 20, 12),
         child: Row(
           children: [
             Expanded(
               child: TextField(
                 key: const Key('library-search'),
                 decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
+                  prefixIcon: Icon(Icons.search, size: 18),
                   hintText: 'Archiv durchsuchen',
+                  isDense: true,
                 ),
                 onChanged: onQueryChanged,
               ),
@@ -584,28 +599,35 @@ class _SermonList extends StatelessWidget {
                 ),
               )
             : ListView.separated(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
                 itemCount: sermons.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 8),
+                separatorBuilder: (context, index) =>
+                    const Divider(indent: 14, endIndent: 14),
                 itemBuilder: (context, index) {
                   final sermon = sermons[index];
                   final reference = sermon.primaryBibleReference?.displayText;
                   return Card(
                     color: selectedId == sermon.id
                         ? Theme.of(context).colorScheme.secondaryContainer
-                        : null,
+                        : Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
                     child: ListTile(
                       key: Key('sermon-${sermon.id}'),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 18,
-                        vertical: 8,
+                        vertical: 10,
                       ),
                       leading: reference == null
                           ? null
                           : _ReferenceBadge(reference: reference),
                       title: Text(
                         sermon.title,
-                        style: const TextStyle(fontWeight: FontWeight.w600),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       subtitle: Padding(
                         padding: const EdgeInsets.only(top: 6),
@@ -678,7 +700,7 @@ class _ReferenceBadge extends StatelessWidget {
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
         color: Theme.of(context).colorScheme.onPrimaryContainer,
-        fontWeight: FontWeight.w700,
+        fontWeight: FontWeight.w500,
       ),
     ),
   );
@@ -696,7 +718,7 @@ class _DetailsPane extends StatelessWidget {
       return const Center(child: Text('Eintrag auswählen'));
     }
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.fromLTRB(48, 52, 48, 36),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -704,13 +726,19 @@ class _DetailsPane extends StatelessWidget {
             Text(
               reference.displayText,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 8),
           ],
-          Text(sermon.title, style: Theme.of(context).textTheme.headlineMedium),
+          Text(
+            sermon.title,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontFamily: AppTypography.editor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           if (sermon.subtitle.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
@@ -733,7 +761,11 @@ class _DetailsPane extends StatelessWidget {
             sermon.document.plainText,
             maxLines: 12,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.bodyLarge,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+              fontFamily: AppTypography.editor,
+              fontSize: 17,
+              height: 1.8,
+            ),
           ),
           const Spacer(),
           SizedBox(

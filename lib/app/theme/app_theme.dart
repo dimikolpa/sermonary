@@ -15,7 +15,8 @@ abstract final class AppRadius {
 }
 
 abstract final class AppSizes {
-  static const editorWidth = 780.0;
+  static const sidebarWidth = 220.0;
+  static const editorWidth = 660.0;
   static const compactBreakpoint = 720.0;
   static const expandedBreakpoint = 1100.0;
 }
@@ -26,62 +27,139 @@ abstract final class AppMotion {
 }
 
 abstract final class AppColors {
-  static const seed = Color(0xFF315A4C);
-  static const brass = Color(0xFF8A7246);
-  static const paper = Color(0xFFF8F5EE);
-  static const ink = Color(0xFF252725);
-  static const error = Color(0xFF9B3F3F);
+  static const seed = Color(0xFF77736A);
+  static const paper = Color(0xFFF9F8F5);
+  static const sidebar = Color(0xFFF4F3EF);
+  static const ink = Color(0xFF1C1B18);
+  static const darkPaper = Color(0xFF1A1917);
+  static const darkInk = Color(0xFFE5E3DC);
+  static const error = Color(0xFF9A413A);
+}
+
+abstract final class AppTypography {
+  static const ui = '.AppleSystemUIFont';
+  static const editor = 'Georgia';
 }
 
 ThemeData buildTheme(Brightness brightness) {
   final dark = brightness == Brightness.dark;
-  final scheme = ColorScheme.fromSeed(
+  final baseScheme = ColorScheme.fromSeed(
     seedColor: AppColors.seed,
     brightness: brightness,
-    surface: dark ? const Color(0xFF1C1F1D) : AppColors.paper,
+  );
+  final scheme = baseScheme.copyWith(
+    surface: dark ? AppColors.darkPaper : AppColors.paper,
+    onSurface: dark ? AppColors.darkInk : AppColors.ink,
+    surfaceContainerLowest: dark
+        ? const Color(0xFF171614)
+        : const Color(0xFFFCFBF8),
+    surfaceContainerLow: dark ? const Color(0xFF1E1D1A) : AppColors.sidebar,
+    surfaceContainer: dark ? const Color(0xFF23211E) : const Color(0xFFF0EFEB),
+    outline: dark ? const Color(0xFF37342F) : const Color(0xFFE1DFD8),
+    outlineVariant: dark ? const Color(0xFF2D2B27) : const Color(0xFFEAE8E2),
+    primary: dark ? AppColors.darkInk : AppColors.ink,
+    onPrimary: dark ? AppColors.ink : AppColors.paper,
+    primaryContainer: dark ? const Color(0xFF302E29) : const Color(0xFFEAE8E2),
+    onPrimaryContainer: dark ? AppColors.darkInk : AppColors.ink,
+    secondaryContainer: dark
+        ? const Color(0xFF292824)
+        : const Color(0xFFEDECE8),
+    error: AppColors.error,
   );
   final textTheme = Typography.material2021().black.apply(
-    bodyColor: dark ? const Color(0xFFE9E7E0) : AppColors.ink,
-    displayColor: dark ? const Color(0xFFF3F1EA) : AppColors.ink,
-    fontFamily: '.AppleSystemUIFont',
+    bodyColor: dark ? AppColors.darkInk : AppColors.ink,
+    displayColor: dark ? AppColors.darkInk : AppColors.ink,
+    fontFamily: AppTypography.ui,
   );
   return ThemeData(
     useMaterial3: true,
     brightness: brightness,
     colorScheme: scheme,
-    scaffoldBackgroundColor: dark
-        ? const Color(0xFF171917)
-        : const Color(0xFFF5F1E8),
+    scaffoldBackgroundColor: scheme.surface,
     textTheme: textTheme.copyWith(
       headlineLarge: textTheme.headlineLarge?.copyWith(
-        fontWeight: FontWeight.w700,
-        height: 1.15,
+        fontWeight: FontWeight.w600,
+        height: 1.18,
+        letterSpacing: -0.7,
       ),
       headlineMedium: textTheme.headlineMedium?.copyWith(
         fontWeight: FontWeight.w600,
-        height: 1.2,
+        height: 1.25,
+        letterSpacing: -0.4,
       ),
-      bodyLarge: textTheme.bodyLarge?.copyWith(height: 1.65, fontSize: 17),
-      bodyMedium: textTheme.bodyMedium?.copyWith(height: 1.55),
+      bodyLarge: textTheme.bodyLarge?.copyWith(height: 1.65, fontSize: 16),
+      bodyMedium: textTheme.bodyMedium?.copyWith(height: 1.5),
+      labelSmall: textTheme.labelSmall?.copyWith(
+        letterSpacing: 0.25,
+        color: scheme.onSurfaceVariant.withValues(alpha: 0.72),
+      ),
+    ),
+    appBarTheme: AppBarTheme(
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      centerTitle: false,
+      backgroundColor: scheme.surface,
+      foregroundColor: scheme.onSurface,
+      surfaceTintColor: Colors.transparent,
+      toolbarHeight: 58,
+      titleTextStyle: textTheme.titleSmall?.copyWith(
+        color: scheme.onSurface,
+        fontWeight: FontWeight.w500,
+      ),
+      shape: Border(
+        bottom: BorderSide(color: scheme.outlineVariant),
+      ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: scheme.surfaceContainerLow,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        borderSide: BorderSide.none,
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderSide: BorderSide(color: scheme.outlineVariant),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderSide: BorderSide(color: scheme.onSurface.withValues(alpha: 0.35)),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: scheme.surfaceContainerLow,
+      color: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        side: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.6)),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        side: BorderSide(color: scheme.outlineVariant),
       ),
     ),
-    dividerTheme: DividerThemeData(color: scheme.outlineVariant),
+    dividerTheme: DividerThemeData(
+      color: scheme.outlineVariant,
+      thickness: 1,
+      space: 1,
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+        ),
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        foregroundColor: scheme.onSurfaceVariant,
+        visualDensity: VisualDensity.compact,
+      ),
+    ),
+    listTileTheme: ListTileThemeData(
+      iconColor: scheme.onSurfaceVariant,
+      textColor: scheme.onSurface,
+      minTileHeight: 38,
+    ),
     tooltipTheme: TooltipThemeData(
       waitDuration: const Duration(milliseconds: 500),
       decoration: BoxDecoration(
