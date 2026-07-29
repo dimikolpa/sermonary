@@ -9,6 +9,7 @@ import 'package:sermonary/app/app_config.dart';
 import 'package:sermonary/app/providers.dart';
 import 'package:sermonary/app/theme/app_theme.dart';
 import 'package:sermonary/features/bible/domain/bible_reference.dart';
+import 'package:sermonary/features/bible/domain/bible_text_importer.dart';
 import 'package:sermonary/features/library/data/sermon_repository.dart';
 import 'package:sermonary/features/library/domain/sermon.dart';
 import 'package:sermonary/features/sermon_editor/domain/sermon_document.dart';
@@ -698,6 +699,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
             initialBookId:
                 draft.primaryBibleReference?.bookId ??
                 BibleBookCatalog.all.first.id,
+            initialChapter: draft.primaryBibleReference?.startChapter ?? 1,
             asNote: _view == WorkspaceView.notes && !_splitActive,
           ),
         ),
@@ -716,10 +718,6 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
           ),
     );
     if (request == null || !mounted) return;
-    final parsed = BibleReferenceParser().parse(
-      '${BibleBookCatalog.labelFor(request.bookId)} ${request.passage}',
-    );
-    if (parsed == null) return;
     final now = DateTime.now().toUtc();
     final active = _activeBlock(draft.document);
     final insertAfterId =
@@ -729,7 +727,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
         insertAfterId,
         NoteBlock(
           id: const Uuid().v4(),
-          text: parsed.displayText,
+          text: request.text,
           visibility: NoteVisibility.editorOnly,
           depth: active is NoteBlock ? active.depth : 0,
           createdAt: now,
@@ -741,7 +739,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
         insertAfterId,
         QuoteBlock(
           id: const Uuid().v4(),
-          text: '— ${parsed.displayText}',
+          text: request.text,
           author: '',
           source: '',
           createdAt: now,
@@ -2456,22 +2454,20 @@ class _ScriptMeta extends StatelessWidget {
 }
 
 class _BibleReferenceRequest {
-  const _BibleReferenceRequest({
-    required this.bookId,
-    required this.passage,
-  });
+  const _BibleReferenceRequest({required this.text});
 
-  final String bookId;
-  final String passage;
+  final String text;
 }
 
 class _BibleReferenceDialog extends StatefulWidget {
   const _BibleReferenceDialog({
     required this.initialBookId,
+    required this.initialChapter,
     required this.asNote,
   });
 
   final String initialBookId;
+  final int initialChapter;
   final bool asNote;
 
   @override
@@ -2480,143 +2476,196 @@ class _BibleReferenceDialog extends StatefulWidget {
 
 class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
   late String _bookId = widget.initialBookId;
-  final TextEditingController _passageController = TextEditingController();
+  late int _chapter = widget.initialChapter.clamp(1, 150);
+  final TextEditingController _textController = TextEditingController();
   String? _errorText;
 
   @override
   void dispose() {
-    _passageController.dispose();
+    _textController.dispose();
     super.dispose();
   }
 
   void _submit() {
-    final passage = _passageController.text.trim();
-    final parsed = BibleReferenceParser().parse(
-      '${BibleBookCatalog.labelFor(_bookId)} $passage',
-    );
-    if (parsed == null) {
+    final imported = BibleTextImporter().import(_textController.text);
+    if (imported == null) {
       setState(() {
-        _errorText = passage.isEmpty
-            ? 'Bitte Kapitel oder Verse eingeben.'
-            : 'Bitte z. B. 3,16 oder 18:16–33 eingeben.';
+        _errorText = _textController.text.trim().isEmpty
+            ? 'Bitte zuerst den kopierten Bibeltext einfügen.'
+            : 'Keine Versnummern erkannt. Bitte den Text einschließlich '
+                  'Versnummern kopieren.';
       });
       return;
     }
     Navigator.of(context).pop(
-      _BibleReferenceRequest(bookId: _bookId, passage: passage),
+      _BibleReferenceRequest(
+        text: imported.withReference(
+          book: BibleBookCatalog.labelFor(_bookId),
+          chapter: _chapter,
+        ),
+      ),
     );
   }
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: Theme.of(context).colorScheme.surfaceContainerLow,
-    elevation: 5,
-    shadowColor: Colors.black.withValues(alpha: 0.12),
-    borderRadius: BorderRadius.circular(8),
-    child: Container(
-      key: const Key('bible-reference-dialog'),
-      width: 288,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
-      decoration: BoxDecoration(
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outlineVariant,
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dropdownStyle = TextStyle(
+      fontFamily: AppTypography.ui,
+      fontSize: 12,
+      fontWeight: FontWeight.w400,
+      color: scheme.onSurface,
+    );
+    return Material(
+      color: scheme.surfaceContainerLow,
+      elevation: 5,
+      shadowColor: Colors.black.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        key: const Key('bible-reference-dialog'),
+        width: 430,
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+        decoration: BoxDecoration(
+          border: Border.all(color: scheme.outlineVariant),
+          borderRadius: BorderRadius.circular(8),
         ),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'BIBELSTELLE EINFÜGEN',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.1,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.42),
-            ),
-          ),
-          const SizedBox(height: 12),
-          DropdownButtonFormField<String>(
-            key: const Key('bible-book-field'),
-            initialValue: _bookId,
-            isExpanded: true,
-            style: const TextStyle(
-              fontFamily: AppTypography.ui,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-            decoration: const InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 9,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'BIBELTEXT EINFÜGEN',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontSize: 9,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.1,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
               ),
             ),
-            items: [
-              for (final book in BibleBookCatalog.all)
-                DropdownMenuItem(value: book.id, child: Text(book.label)),
-            ],
-            onChanged: (value) {
-              if (value != null) setState(() => _bookId = value);
-            },
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            key: const Key('bible-passage-field'),
-            controller: _passageController,
-            autofocus: true,
-            style: const TextStyle(
-              fontFamily: AppTypography.ui,
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
+            const SizedBox(height: 12),
+            TextField(
+              key: const Key('bible-text-field'),
+              controller: _textController,
+              autofocus: true,
+              minLines: 5,
+              maxLines: 8,
+              style: dropdownStyle.copyWith(height: 1.45),
+              decoration: const InputDecoration(
+                hintText:
+                    'Bibeltext einschließlich Versnummern hier '
+                    'einfügen …',
+                isDense: true,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+              ).copyWith(errorText: _errorText),
+              onChanged: (_) {
+                if (_errorText != null) setState(() => _errorText = null);
+              },
             ),
-            decoration: const InputDecoration(
-              hintText: 'Vers, z. B. 3,16 oder 18:16–33',
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 9,
+            const SizedBox(height: 6),
+            Text(
+              'Versnummern und Anmerkungen in [Klammern] werden automatisch '
+              'entfernt.',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontSize: 10,
+                color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
               ),
-            ).copyWith(errorText: _errorText),
-            textInputAction: TextInputAction.done,
-            onChanged: (_) {
-              if (_errorText != null) setState(() => _errorText = null);
-            },
-            onSubmitted: (_) => _submit(),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 36,
-            child: FilledButton(
-              key: const Key('insert-bible-reference'),
-              onPressed: _submit,
-              style: FilledButton.styleFrom(
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainer,
-                foregroundColor: Theme.of(context).colorScheme.onSurface,
-                padding: EdgeInsets.zero,
-                textStyle: const TextStyle(
-                  fontFamily: AppTypography.ui,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    key: const Key('bible-book-field'),
+                    initialValue: _bookId,
+                    isExpanded: true,
+                    dropdownColor: scheme.surfaceContainerLowest,
+                    iconEnabledColor: scheme.onSurfaceVariant,
+                    style: dropdownStyle,
+                    decoration: const InputDecoration(
+                      labelText: 'Buch',
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
+                      ),
+                    ),
+                    items: [
+                      for (final book in BibleBookCatalog.all)
+                        DropdownMenuItem(
+                          value: book.id,
+                          child: Text(book.label, style: dropdownStyle),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setState(() => _bookId = value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    key: const Key('bible-chapter-field'),
+                    initialValue: _chapter,
+                    isExpanded: true,
+                    menuMaxHeight: 320,
+                    dropdownColor: scheme.surfaceContainerLowest,
+                    iconEnabledColor: scheme.onSurfaceVariant,
+                    style: dropdownStyle,
+                    decoration: const InputDecoration(
+                      labelText: 'Kapitel',
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 9,
+                      ),
+                    ),
+                    items: [
+                      for (var chapter = 1; chapter <= 150; chapter++)
+                        DropdownMenuItem(
+                          value: chapter,
+                          child: Text('$chapter', style: dropdownStyle),
+                        ),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setState(() => _chapter = value);
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: FilledButton(
+                key: const Key('insert-bible-reference'),
+                onPressed: _submit,
+                style: FilledButton.styleFrom(
+                  backgroundColor: scheme.surfaceContainer,
+                  foregroundColor: scheme.onSurface,
+                  padding: EdgeInsets.zero,
+                  textStyle: const TextStyle(
+                    fontFamily: AppTypography.ui,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                child: Text(
+                  widget.asNote
+                      ? 'Als Stichpunkt einfügen'
+                      : 'Als Zitat einfügen',
                 ),
               ),
-              child: Text(
-                widget.asNote
-                    ? 'Als Stichpunkt einfügen'
-                    : 'Als Zitat einfügen',
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _BookDropdown extends StatelessWidget {

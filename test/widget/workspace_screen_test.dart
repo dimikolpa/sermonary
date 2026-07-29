@@ -213,11 +213,14 @@ void main() {
     expect(find.byKey(const Key('bible-reference-dialog')), findsOneWidget);
     await tester.tap(find.byKey(const Key('insert-bible-reference')));
     await tester.pump();
-    expect(find.text('Bitte Kapitel oder Verse eingeben.'), findsOneWidget);
+    expect(
+      find.text('Bitte zuerst den kopierten Bibeltext einfügen.'),
+      findsOneWidget,
+    );
     expect(find.byKey(const Key('bible-reference-dialog')), findsOneWidget);
     await tester.enterText(
-      find.byKey(const Key('bible-passage-field')),
-      '3:17',
+      find.byKey(const Key('bible-text-field')),
+      '16\u00a0Denn so sehr hat Gott[1] die Welt geliebt.\u200217\u00a0Gott sandte seinen Sohn.',
     );
     await tester.tap(find.byKey(const Key('insert-bible-reference')));
     await tester.pump(const Duration(milliseconds: 700));
@@ -229,7 +232,10 @@ void main() {
     );
     expect(
       saved.document.blocks.whereType<QuoteBlock>().map((block) => block.text),
-      contains('— Johannes 3:17'),
+      contains(
+        'Denn so sehr hat Gott die Welt geliebt. '
+        'Gott sandte seinen Sohn. Johannes 3: 16-17',
+      ),
     );
 
     await tester.tap(find.byTooltip('Notizen'));
@@ -247,8 +253,8 @@ void main() {
     await tester.tap(find.byTooltip('Bibelstelle einfügen'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('bible-passage-field')),
-      '3,18',
+      find.byKey(const Key('bible-text-field')),
+      '18\u00a0Wer an ihn glaubt[4], wird nicht gerichtet.',
     );
     await tester.tap(find.byKey(const Key('insert-bible-reference')));
     await tester.pump(const Duration(milliseconds: 700));
@@ -259,9 +265,11 @@ void main() {
       )..where((row) => row.id.equals(sermon.id))).getSingle(),
     );
     final notes = saved.document.blocks.whereType<NoteBlock>().toList();
-    expect(notes.map((block) => block.text), contains('Johannes 3,18'));
+    const insertedText =
+        'Wer an ihn glaubt, wird nicht gerichtet. Johannes 3: 18';
+    expect(notes.map((block) => block.text), contains(insertedText));
     final insertedNote = notes.singleWhere(
-      (block) => block.text == 'Johannes 3,18',
+      (block) => block.text == insertedText,
     );
     expect(insertedNote.depth, 1);
 
