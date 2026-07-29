@@ -16,7 +16,7 @@ void main() {
 
   tearDown(() => database.close());
 
-  test('schema version 2 creates all required tables', () async {
+  test('schema version 3 creates all required tables', () async {
     final rows = await database
         .customSelect(
           "SELECT name FROM sqlite_master WHERE type = 'table'",
@@ -33,9 +33,11 @@ void main() {
         'sermon_preached_dates',
         'document_versions',
         'app_settings',
+        'bible_translations',
+        'bible_verses',
       ]),
     );
-    expect(database.schemaVersion, 2);
+    expect(database.schemaVersion, 3);
     final sermonColumns = await database
         .customSelect('PRAGMA table_info(sermons)')
         .get();
@@ -45,35 +47,45 @@ void main() {
     );
   });
 
-  test('migration from schema 1 adds content kind non-destructively', () async {
-    await database.close();
-    final legacy = AppDatabase(
-      NativeDatabase.memory(
-        setup: (rawDatabase) {
-          rawDatabase
-            ..execute(
-              'CREATE TABLE sermons (id TEXT NOT NULL PRIMARY KEY)',
-            )
-            ..userVersion = 1;
-        },
-      ),
-    );
-    addTearDown(legacy.close);
+  test(
+    'migration from schema 1 adds newer structures non-destructively',
+    () async {
+      await database.close();
+      final legacy = AppDatabase(
+        NativeDatabase.memory(
+          setup: (rawDatabase) {
+            rawDatabase
+              ..execute(
+                'CREATE TABLE sermons (id TEXT NOT NULL PRIMARY KEY)',
+              )
+              ..userVersion = 1;
+          },
+        ),
+      );
+      addTearDown(legacy.close);
 
-    final columns = await legacy
-        .customSelect('PRAGMA table_info(sermons)')
-        .get();
-    expect(
-      columns.map((row) => row.read<String>('name')),
-      contains('content_kind'),
-    );
-    expect(
-      columns
-          .singleWhere((row) => row.read<String>('name') == 'content_kind')
-          .read<String>('dflt_value'),
-      "'sermon'",
-    );
-  });
+      final columns = await legacy
+          .customSelect('PRAGMA table_info(sermons)')
+          .get();
+      expect(
+        columns.map((row) => row.read<String>('name')),
+        contains('content_kind'),
+      );
+      expect(
+        columns
+            .singleWhere((row) => row.read<String>('name') == 'content_kind')
+            .read<String>('dflt_value'),
+        "'sermon'",
+      );
+      final tables = await legacy
+          .customSelect("SELECT name FROM sqlite_master WHERE type = 'table'")
+          .get();
+      expect(
+        tables.map((row) => row.read<String>('name')),
+        containsAll(['bible_translations', 'bible_verses']),
+      );
+    },
+  );
 
   test('create, update, trash, restore and version snapshot', () async {
     final created = await repository.create();

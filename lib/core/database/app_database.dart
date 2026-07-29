@@ -98,6 +98,37 @@ class AppSettings extends Table {
   Set<Column<Object>> get primaryKey => {key};
 }
 
+class BibleTranslations extends Table {
+  TextColumn get id => text()();
+  TextColumn get abbreviation => text()();
+  TextColumn get name => text()();
+  TextColumn get language => text()();
+  TextColumn get source => text()();
+  TextColumn get copyrightNotice => text()();
+  IntColumn get dataVersion => integer()();
+  DateTimeColumn get importedAt => dateTime()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+class BibleVerses extends Table {
+  TextColumn get translationId => text()();
+  TextColumn get bookId => text()();
+  IntColumn get chapter => integer()();
+  IntColumn get verse => integer()();
+  TextColumn get content => text().named('text')();
+  TextColumn get sourceText => text()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {
+    translationId,
+    bookId,
+    chapter,
+    verse,
+  };
+}
+
 @DriftDatabase(
   tables: [
     SermonRows,
@@ -107,6 +138,8 @@ class AppSettings extends Table {
     SermonPreachedDates,
     DocumentVersions,
     AppSettings,
+    BibleTranslations,
+    BibleVerses,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -114,7 +147,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'sermonary'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -123,6 +156,10 @@ class AppDatabase extends _$AppDatabase {
       if (from > to) throw StateError('Datenbank-Downgrade nicht unterstützt');
       if (from < 2) {
         await migrator.addColumn(sermonRows, sermonRows.contentKind);
+      }
+      if (from < 3) {
+        await migrator.createTable(bibleTranslations);
+        await migrator.createTable(bibleVerses);
       }
     },
     beforeOpen: (details) async {

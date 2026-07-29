@@ -31,7 +31,14 @@ class BibleSearchResult {
 }
 
 abstract interface class BibleProvider {
+  Future<void> prepare();
   Future<List<BibleTranslationInfo>> listTranslations();
+  Future<List<int>> listChapters(String translationId, String bookId);
+  Future<List<int>> listVerses(
+    String translationId,
+    String bookId,
+    int chapter,
+  );
   Future<List<BibleSearchResult>> search(String query);
   Future<BiblePassage?> getPassage(
     BibleReference reference,
@@ -49,9 +56,24 @@ class MockBibleProvider implements BibleProvider {
   );
 
   @override
+  Future<void> prepare() async {}
+
+  @override
   Future<List<BibleTranslationInfo>> listTranslations() async => [
     _translation,
   ];
+
+  @override
+  Future<List<int>> listChapters(String translationId, String bookId) async => [
+    1,
+  ];
+
+  @override
+  Future<List<int>> listVerses(
+    String translationId,
+    String bookId,
+    int chapter,
+  ) async => [1];
 
   @override
   Future<BiblePassage?> getPassage(

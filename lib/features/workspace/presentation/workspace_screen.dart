@@ -8,6 +8,7 @@ import 'package:lucide_flutter/lucide_flutter.dart';
 import 'package:sermonary/app/app_config.dart';
 import 'package:sermonary/app/providers.dart';
 import 'package:sermonary/app/theme/app_theme.dart';
+import 'package:sermonary/features/bible/domain/bible_provider.dart';
 import 'package:sermonary/features/bible/domain/bible_reference.dart';
 import 'package:sermonary/features/bible/domain/bible_text_importer.dart';
 import 'package:sermonary/features/library/data/sermon_repository.dart';
@@ -696,6 +697,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
         child: Padding(
           padding: const EdgeInsets.only(top: 58),
           child: _BibleReferenceDialog(
+            provider: ref.read(bibleProviderProvider),
             initialBookId:
                 draft.primaryBibleReference?.bookId ??
                 BibleBookCatalog.all.first.id,
@@ -2461,11 +2463,13 @@ class _BibleReferenceRequest {
 
 class _BibleReferenceDialog extends StatefulWidget {
   const _BibleReferenceDialog({
+    required this.provider,
     required this.initialBookId,
     required this.initialChapter,
     required this.asNote,
   });
 
+  final BibleProvider provider;
   final String initialBookId;
   final int initialChapter;
   final bool asNote;
@@ -2477,6 +2481,14 @@ class _BibleReferenceDialog extends StatefulWidget {
 class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
   late String _bookId = widget.initialBookId;
   late int _chapter = widget.initialChapter.clamp(1, 150);
+  int _verseFrom = 1;
+  int _verseTo = 1;
+  List<int> _availableChapters = const [];
+  List<int> _availableVerses = const [];
+  bool _elb85 = false;
+  bool _loading = false;
+  bool _submitting = false;
+  int _loadGeneration = 0;
   final TextEditingController _textController = TextEditingController();
   String? _errorText;
 
@@ -2486,7 +2498,125 @@ class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _toggleElb85() async {
+    final enabled = !_elb85;
+    setState(() {
+      _elb85 = enabled;
+      _errorText = null;
+    });
+    if (enabled) await _loadBook(_bookId);
+  }
+
+  Future<void> _loadBook(String bookId) async {
+    final generation = ++_loadGeneration;
+    setState(() {
+      _bookId = bookId;
+      _loading = true;
+      _availableChapters = const [];
+      _availableVerses = const [];
+    });
+    try {
+      final chapters = await widget.provider.listChapters('elb85', bookId);
+      if (!mounted || generation != _loadGeneration) return;
+      if (chapters.isEmpty) {
+        setState(() {
+          _loading = false;
+          _errorText = 'Für dieses Buch wurden keine Kapitel gefunden.';
+        });
+        return;
+      }
+      final chapter = chapters.contains(_chapter) ? _chapter : chapters.first;
+      setState(() {
+        _availableChapters = chapters;
+        _chapter = chapter;
+      });
+      await _loadChapter(chapter, generation: generation);
+    } on Object catch (_) {
+      if (!mounted || generation != _loadGeneration) return;
+      setState(() {
+        _loading = false;
+        _errorText = 'Die lokale ELB85 konnte nicht geladen werden.';
+      });
+    }
+  }
+
+  Future<void> _loadChapter(int chapter, {int? generation}) async {
+    final activeGeneration = generation ?? ++_loadGeneration;
+    setState(() {
+      _chapter = chapter;
+      _loading = true;
+      _availableVerses = const [];
+    });
+    try {
+      final verses = await widget.provider.listVerses(
+        'elb85',
+        _bookId,
+        chapter,
+      );
+      if (!mounted || activeGeneration != _loadGeneration) return;
+      setState(() {
+        _availableVerses = verses;
+        _verseFrom = verses.isEmpty ? 1 : verses.first;
+        _verseTo = verses.isEmpty ? 1 : verses.first;
+        _loading = false;
+        _errorText = verses.isEmpty
+            ? 'Für dieses Kapitel wurden keine Verse gefunden.'
+            : null;
+      });
+    } on Object catch (_) {
+      if (!mounted || activeGeneration != _loadGeneration) return;
+      setState(() {
+        _loading = false;
+        _errorText = 'Die Verse konnten nicht geladen werden.';
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_elb85) {
+      if (_loading || _availableVerses.isEmpty) return;
+      setState(() {
+        _submitting = true;
+        _errorText = null;
+      });
+      final reference = BibleReference(
+        bookId: _bookId,
+        startChapter: _chapter,
+        startVerse: _verseFrom,
+        endVerse: _verseTo,
+        displayText:
+            '${BibleBookCatalog.labelFor(_bookId)} '
+            '$_chapter,$_verseFrom–$_verseTo',
+      );
+      try {
+        final passage = await widget.provider.getPassage(reference, 'elb85');
+        if (!mounted) return;
+        if (passage == null) {
+          setState(() {
+            _submitting = false;
+            _errorText = 'Der ausgewählte Bibeltext wurde nicht gefunden.';
+          });
+          return;
+        }
+        final range = _verseFrom == _verseTo
+            ? '$_verseFrom'
+            : '$_verseFrom-$_verseTo';
+        Navigator.of(context).pop(
+          _BibleReferenceRequest(
+            text:
+                '${passage.text} '
+                '${BibleBookCatalog.labelFor(_bookId)} $_chapter: $range',
+          ),
+        );
+      } on Object catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _submitting = false;
+          _errorText = 'Der Bibeltext konnte nicht eingefügt werden.';
+        });
+      }
+      return;
+    }
     final imported = BibleTextImporter().import(_textController.text);
     if (imported == null) {
       setState(() {
@@ -2533,46 +2663,76 @@ class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'BIBELTEXT EINFÜGEN',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 9,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 1.1,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'BIBELTEXT EINFÜGEN',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.1,
+                      color: scheme.onSurfaceVariant.withValues(alpha: 0.42),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 28,
+                  child: TextButton(
+                    key: const Key('elb85-mode'),
+                    onPressed: _toggleElb85,
+                    style: TextButton.styleFrom(
+                      foregroundColor: scheme.onSurface,
+                      backgroundColor: _elb85
+                          ? scheme.primaryContainer
+                          : Colors.transparent,
+                      side: BorderSide(color: scheme.outlineVariant),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      textStyle: const TextStyle(
+                        fontFamily: AppTypography.ui,
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text('ELB85'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            TextField(
-              key: const Key('bible-text-field'),
-              controller: _textController,
-              autofocus: true,
-              minLines: 5,
-              maxLines: 8,
-              style: dropdownStyle.copyWith(height: 1.45),
-              decoration: const InputDecoration(
-                hintText:
-                    'Bibeltext einschließlich Versnummern hier '
-                    'einfügen …',
-                isDense: true,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-              ).copyWith(errorText: _errorText),
-              onChanged: (_) {
-                if (_errorText != null) setState(() => _errorText = null);
-              },
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Versnummern und Anmerkungen in [Klammern] werden automatisch '
-              'entfernt.',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 10,
-                color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+            if (!_elb85) ...[
+              TextField(
+                key: const Key('bible-text-field'),
+                controller: _textController,
+                autofocus: true,
+                minLines: 5,
+                maxLines: 8,
+                style: dropdownStyle.copyWith(height: 1.45),
+                decoration: const InputDecoration(
+                  hintText:
+                      'Bibeltext einschließlich Versnummern hier '
+                      'einfügen …',
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
+                ).copyWith(errorText: _errorText),
+                onChanged: (_) {
+                  if (_errorText != null) setState(() => _errorText = null);
+                },
               ),
-            ),
+              const SizedBox(height: 6),
+              Text(
+                'Versnummern und Anmerkungen in [Klammern] werden automatisch '
+                'entfernt.',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontSize: 10,
+                  color: scheme.onSurfaceVariant.withValues(alpha: 0.48),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [
@@ -2601,7 +2761,12 @@ class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
                         ),
                     ],
                     onChanged: (value) {
-                      if (value != null) setState(() => _bookId = value);
+                      if (value == null) return;
+                      if (_elb85) {
+                        unawaited(_loadBook(value));
+                      } else {
+                        setState(() => _bookId = value);
+                      }
                     },
                   ),
                 ),
@@ -2624,26 +2789,85 @@ class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
                       ),
                     ),
                     items: [
-                      for (var chapter = 1; chapter <= 150; chapter++)
+                      for (final chapter
+                          in _elb85
+                              ? _availableChapters
+                              : List<int>.generate(150, (index) => index + 1))
                         DropdownMenuItem(
                           value: chapter,
                           child: Text('$chapter', style: dropdownStyle),
                         ),
                     ],
                     onChanged: (value) {
-                      if (value != null) setState(() => _chapter = value);
+                      if (value == null) return;
+                      if (_elb85) {
+                        unawaited(_loadChapter(value));
+                      } else {
+                        setState(() => _chapter = value);
+                      }
                     },
                   ),
                 ),
               ],
             ),
+            if (_elb85) ...[
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _BibleNumberDropdown(
+                      key: const Key('bible-verse-from-field'),
+                      label: 'Vers von',
+                      value: _availableVerses.contains(_verseFrom)
+                          ? _verseFrom
+                          : null,
+                      values: _availableVerses,
+                      style: dropdownStyle,
+                      onChanged: (value) {
+                        if (value == null) return;
+                        setState(() {
+                          _verseFrom = value;
+                          if (_verseTo < value) _verseTo = value;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _BibleNumberDropdown(
+                      key: const Key('bible-verse-to-field'),
+                      label: 'Vers bis',
+                      value: _availableVerses.contains(_verseTo)
+                          ? _verseTo
+                          : null,
+                      values: _availableVerses
+                          .where((verse) => verse >= _verseFrom)
+                          .toList(growable: false),
+                      style: dropdownStyle,
+                      onChanged: (value) {
+                        if (value != null) setState(() => _verseTo = value);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (_elb85 && _errorText != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _errorText!,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.error,
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               height: 36,
               child: FilledButton(
                 key: const Key('insert-bible-reference'),
-                onPressed: _submit,
+                onPressed: _loading || _submitting ? null : _submit,
                 style: FilledButton.styleFrom(
                   backgroundColor: scheme.surfaceContainer,
                   foregroundColor: scheme.onSurface,
@@ -2654,16 +2878,67 @@ class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                child: Text(
-                  widget.asNote
-                      ? 'Als Stichpunkt einfügen'
-                      : 'Als Zitat einfügen',
-                ),
+                child: _loading || _submitting
+                    ? const SizedBox.square(
+                        dimension: 14,
+                        child: CircularProgressIndicator(strokeWidth: 1.5),
+                      )
+                    : Text(
+                        widget.asNote
+                            ? 'Als Stichpunkt einfügen'
+                            : 'Als Zitat einfügen',
+                      ),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BibleNumberDropdown extends StatelessWidget {
+  const _BibleNumberDropdown({
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.style,
+    required this.onChanged,
+    super.key,
+  });
+
+  final String label;
+  final int? value;
+  final List<int> values;
+  final TextStyle style;
+  final ValueChanged<int?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return DropdownButtonFormField<int>(
+      initialValue: value,
+      isExpanded: true,
+      menuMaxHeight: 320,
+      dropdownColor: scheme.surfaceContainerLowest,
+      iconEnabledColor: scheme.onSurfaceVariant,
+      style: style,
+      decoration: InputDecoration(
+        labelText: label,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 9,
+        ),
+      ),
+      items: [
+        for (final number in values)
+          DropdownMenuItem(
+            value: number,
+            child: Text('$number', style: style),
+          ),
+      ],
+      onChanged: values.isEmpty ? null : onChanged,
     );
   }
 }

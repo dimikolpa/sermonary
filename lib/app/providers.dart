@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sermonary/core/database/app_database.dart';
+import 'package:sermonary/features/bible/data/local_bible_provider.dart';
 import 'package:sermonary/features/bible/domain/bible_provider.dart';
 import 'package:sermonary/features/bible/domain/bible_reference.dart';
 import 'package:sermonary/features/export/application/export_service.dart';
@@ -26,7 +27,7 @@ final exportServiceProvider = Provider<ExportService>(
 );
 
 final bibleProviderProvider = Provider<BibleProvider>(
-  (ref) => const MockBibleProvider(),
+  (ref) => LocalBibleProvider(ref.watch(databaseProvider)),
 );
 
 final sermonsProvider = StreamProvider<List<Sermon>>(
@@ -39,8 +40,9 @@ final StreamProviderFamily<Sermon?, String> sermonProvider =
     );
 
 final bootstrapProvider = FutureProvider<void>((ref) async {
-  if (const bool.fromEnvironment('dart.vm.product')) return;
   final database = ref.watch(databaseProvider);
+  await ref.watch(bibleProviderProvider).prepare();
+  if (const bool.fromEnvironment('dart.vm.product')) return;
   final repository = ref.watch(sermonRepositoryProvider);
   final existing = await database.select(database.sermonRows).get();
   if (existing.isNotEmpty) {

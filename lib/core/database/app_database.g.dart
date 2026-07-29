@@ -3526,6 +3526,955 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   }
 }
 
+class $BibleTranslationsTable extends BibleTranslations
+    with TableInfo<$BibleTranslationsTable, BibleTranslation> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BibleTranslationsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _abbreviationMeta = const VerificationMeta(
+    'abbreviation',
+  );
+  @override
+  late final GeneratedColumn<String> abbreviation = GeneratedColumn<String>(
+    'abbreviation',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _languageMeta = const VerificationMeta(
+    'language',
+  );
+  @override
+  late final GeneratedColumn<String> language = GeneratedColumn<String>(
+    'language',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+    'source',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _copyrightNoticeMeta = const VerificationMeta(
+    'copyrightNotice',
+  );
+  @override
+  late final GeneratedColumn<String> copyrightNotice = GeneratedColumn<String>(
+    'copyright_notice',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _dataVersionMeta = const VerificationMeta(
+    'dataVersion',
+  );
+  @override
+  late final GeneratedColumn<int> dataVersion = GeneratedColumn<int>(
+    'data_version',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _importedAtMeta = const VerificationMeta(
+    'importedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> importedAt = GeneratedColumn<DateTime>(
+    'imported_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    abbreviation,
+    name,
+    language,
+    source,
+    copyrightNotice,
+    dataVersion,
+    importedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bible_translations';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BibleTranslation> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('abbreviation')) {
+      context.handle(
+        _abbreviationMeta,
+        abbreviation.isAcceptableOrUnknown(
+          data['abbreviation']!,
+          _abbreviationMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_abbreviationMeta);
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('language')) {
+      context.handle(
+        _languageMeta,
+        language.isAcceptableOrUnknown(data['language']!, _languageMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_languageMeta);
+    }
+    if (data.containsKey('source')) {
+      context.handle(
+        _sourceMeta,
+        source.isAcceptableOrUnknown(data['source']!, _sourceMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceMeta);
+    }
+    if (data.containsKey('copyright_notice')) {
+      context.handle(
+        _copyrightNoticeMeta,
+        copyrightNotice.isAcceptableOrUnknown(
+          data['copyright_notice']!,
+          _copyrightNoticeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_copyrightNoticeMeta);
+    }
+    if (data.containsKey('data_version')) {
+      context.handle(
+        _dataVersionMeta,
+        dataVersion.isAcceptableOrUnknown(
+          data['data_version']!,
+          _dataVersionMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_dataVersionMeta);
+    }
+    if (data.containsKey('imported_at')) {
+      context.handle(
+        _importedAtMeta,
+        importedAt.isAcceptableOrUnknown(data['imported_at']!, _importedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_importedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  BibleTranslation map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BibleTranslation(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      abbreviation: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}abbreviation'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      language: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}language'],
+      )!,
+      source: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source'],
+      )!,
+      copyrightNotice: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}copyright_notice'],
+      )!,
+      dataVersion: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}data_version'],
+      )!,
+      importedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}imported_at'],
+      )!,
+    );
+  }
+
+  @override
+  $BibleTranslationsTable createAlias(String alias) {
+    return $BibleTranslationsTable(attachedDatabase, alias);
+  }
+}
+
+class BibleTranslation extends DataClass
+    implements Insertable<BibleTranslation> {
+  final String id;
+  final String abbreviation;
+  final String name;
+  final String language;
+  final String source;
+  final String copyrightNotice;
+  final int dataVersion;
+  final DateTime importedAt;
+  const BibleTranslation({
+    required this.id,
+    required this.abbreviation,
+    required this.name,
+    required this.language,
+    required this.source,
+    required this.copyrightNotice,
+    required this.dataVersion,
+    required this.importedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['abbreviation'] = Variable<String>(abbreviation);
+    map['name'] = Variable<String>(name);
+    map['language'] = Variable<String>(language);
+    map['source'] = Variable<String>(source);
+    map['copyright_notice'] = Variable<String>(copyrightNotice);
+    map['data_version'] = Variable<int>(dataVersion);
+    map['imported_at'] = Variable<DateTime>(importedAt);
+    return map;
+  }
+
+  BibleTranslationsCompanion toCompanion(bool nullToAbsent) {
+    return BibleTranslationsCompanion(
+      id: Value(id),
+      abbreviation: Value(abbreviation),
+      name: Value(name),
+      language: Value(language),
+      source: Value(source),
+      copyrightNotice: Value(copyrightNotice),
+      dataVersion: Value(dataVersion),
+      importedAt: Value(importedAt),
+    );
+  }
+
+  factory BibleTranslation.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BibleTranslation(
+      id: serializer.fromJson<String>(json['id']),
+      abbreviation: serializer.fromJson<String>(json['abbreviation']),
+      name: serializer.fromJson<String>(json['name']),
+      language: serializer.fromJson<String>(json['language']),
+      source: serializer.fromJson<String>(json['source']),
+      copyrightNotice: serializer.fromJson<String>(json['copyrightNotice']),
+      dataVersion: serializer.fromJson<int>(json['dataVersion']),
+      importedAt: serializer.fromJson<DateTime>(json['importedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'abbreviation': serializer.toJson<String>(abbreviation),
+      'name': serializer.toJson<String>(name),
+      'language': serializer.toJson<String>(language),
+      'source': serializer.toJson<String>(source),
+      'copyrightNotice': serializer.toJson<String>(copyrightNotice),
+      'dataVersion': serializer.toJson<int>(dataVersion),
+      'importedAt': serializer.toJson<DateTime>(importedAt),
+    };
+  }
+
+  BibleTranslation copyWith({
+    String? id,
+    String? abbreviation,
+    String? name,
+    String? language,
+    String? source,
+    String? copyrightNotice,
+    int? dataVersion,
+    DateTime? importedAt,
+  }) => BibleTranslation(
+    id: id ?? this.id,
+    abbreviation: abbreviation ?? this.abbreviation,
+    name: name ?? this.name,
+    language: language ?? this.language,
+    source: source ?? this.source,
+    copyrightNotice: copyrightNotice ?? this.copyrightNotice,
+    dataVersion: dataVersion ?? this.dataVersion,
+    importedAt: importedAt ?? this.importedAt,
+  );
+  BibleTranslation copyWithCompanion(BibleTranslationsCompanion data) {
+    return BibleTranslation(
+      id: data.id.present ? data.id.value : this.id,
+      abbreviation: data.abbreviation.present
+          ? data.abbreviation.value
+          : this.abbreviation,
+      name: data.name.present ? data.name.value : this.name,
+      language: data.language.present ? data.language.value : this.language,
+      source: data.source.present ? data.source.value : this.source,
+      copyrightNotice: data.copyrightNotice.present
+          ? data.copyrightNotice.value
+          : this.copyrightNotice,
+      dataVersion: data.dataVersion.present
+          ? data.dataVersion.value
+          : this.dataVersion,
+      importedAt: data.importedAt.present
+          ? data.importedAt.value
+          : this.importedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BibleTranslation(')
+          ..write('id: $id, ')
+          ..write('abbreviation: $abbreviation, ')
+          ..write('name: $name, ')
+          ..write('language: $language, ')
+          ..write('source: $source, ')
+          ..write('copyrightNotice: $copyrightNotice, ')
+          ..write('dataVersion: $dataVersion, ')
+          ..write('importedAt: $importedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    abbreviation,
+    name,
+    language,
+    source,
+    copyrightNotice,
+    dataVersion,
+    importedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BibleTranslation &&
+          other.id == this.id &&
+          other.abbreviation == this.abbreviation &&
+          other.name == this.name &&
+          other.language == this.language &&
+          other.source == this.source &&
+          other.copyrightNotice == this.copyrightNotice &&
+          other.dataVersion == this.dataVersion &&
+          other.importedAt == this.importedAt);
+}
+
+class BibleTranslationsCompanion extends UpdateCompanion<BibleTranslation> {
+  final Value<String> id;
+  final Value<String> abbreviation;
+  final Value<String> name;
+  final Value<String> language;
+  final Value<String> source;
+  final Value<String> copyrightNotice;
+  final Value<int> dataVersion;
+  final Value<DateTime> importedAt;
+  final Value<int> rowid;
+  const BibleTranslationsCompanion({
+    this.id = const Value.absent(),
+    this.abbreviation = const Value.absent(),
+    this.name = const Value.absent(),
+    this.language = const Value.absent(),
+    this.source = const Value.absent(),
+    this.copyrightNotice = const Value.absent(),
+    this.dataVersion = const Value.absent(),
+    this.importedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BibleTranslationsCompanion.insert({
+    required String id,
+    required String abbreviation,
+    required String name,
+    required String language,
+    required String source,
+    required String copyrightNotice,
+    required int dataVersion,
+    required DateTime importedAt,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       abbreviation = Value(abbreviation),
+       name = Value(name),
+       language = Value(language),
+       source = Value(source),
+       copyrightNotice = Value(copyrightNotice),
+       dataVersion = Value(dataVersion),
+       importedAt = Value(importedAt);
+  static Insertable<BibleTranslation> custom({
+    Expression<String>? id,
+    Expression<String>? abbreviation,
+    Expression<String>? name,
+    Expression<String>? language,
+    Expression<String>? source,
+    Expression<String>? copyrightNotice,
+    Expression<int>? dataVersion,
+    Expression<DateTime>? importedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (abbreviation != null) 'abbreviation': abbreviation,
+      if (name != null) 'name': name,
+      if (language != null) 'language': language,
+      if (source != null) 'source': source,
+      if (copyrightNotice != null) 'copyright_notice': copyrightNotice,
+      if (dataVersion != null) 'data_version': dataVersion,
+      if (importedAt != null) 'imported_at': importedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BibleTranslationsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? abbreviation,
+    Value<String>? name,
+    Value<String>? language,
+    Value<String>? source,
+    Value<String>? copyrightNotice,
+    Value<int>? dataVersion,
+    Value<DateTime>? importedAt,
+    Value<int>? rowid,
+  }) {
+    return BibleTranslationsCompanion(
+      id: id ?? this.id,
+      abbreviation: abbreviation ?? this.abbreviation,
+      name: name ?? this.name,
+      language: language ?? this.language,
+      source: source ?? this.source,
+      copyrightNotice: copyrightNotice ?? this.copyrightNotice,
+      dataVersion: dataVersion ?? this.dataVersion,
+      importedAt: importedAt ?? this.importedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (abbreviation.present) {
+      map['abbreviation'] = Variable<String>(abbreviation.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (language.present) {
+      map['language'] = Variable<String>(language.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (copyrightNotice.present) {
+      map['copyright_notice'] = Variable<String>(copyrightNotice.value);
+    }
+    if (dataVersion.present) {
+      map['data_version'] = Variable<int>(dataVersion.value);
+    }
+    if (importedAt.present) {
+      map['imported_at'] = Variable<DateTime>(importedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BibleTranslationsCompanion(')
+          ..write('id: $id, ')
+          ..write('abbreviation: $abbreviation, ')
+          ..write('name: $name, ')
+          ..write('language: $language, ')
+          ..write('source: $source, ')
+          ..write('copyrightNotice: $copyrightNotice, ')
+          ..write('dataVersion: $dataVersion, ')
+          ..write('importedAt: $importedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BibleVersesTable extends BibleVerses
+    with TableInfo<$BibleVersesTable, BibleVerse> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BibleVersesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _translationIdMeta = const VerificationMeta(
+    'translationId',
+  );
+  @override
+  late final GeneratedColumn<String> translationId = GeneratedColumn<String>(
+    'translation_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _bookIdMeta = const VerificationMeta('bookId');
+  @override
+  late final GeneratedColumn<String> bookId = GeneratedColumn<String>(
+    'book_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _chapterMeta = const VerificationMeta(
+    'chapter',
+  );
+  @override
+  late final GeneratedColumn<int> chapter = GeneratedColumn<int>(
+    'chapter',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _verseMeta = const VerificationMeta('verse');
+  @override
+  late final GeneratedColumn<int> verse = GeneratedColumn<int>(
+    'verse',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _contentMeta = const VerificationMeta(
+    'content',
+  );
+  @override
+  late final GeneratedColumn<String> content = GeneratedColumn<String>(
+    'text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sourceTextMeta = const VerificationMeta(
+    'sourceText',
+  );
+  @override
+  late final GeneratedColumn<String> sourceText = GeneratedColumn<String>(
+    'source_text',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    translationId,
+    bookId,
+    chapter,
+    verse,
+    content,
+    sourceText,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bible_verses';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<BibleVerse> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('translation_id')) {
+      context.handle(
+        _translationIdMeta,
+        translationId.isAcceptableOrUnknown(
+          data['translation_id']!,
+          _translationIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_translationIdMeta);
+    }
+    if (data.containsKey('book_id')) {
+      context.handle(
+        _bookIdMeta,
+        bookId.isAcceptableOrUnknown(data['book_id']!, _bookIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_bookIdMeta);
+    }
+    if (data.containsKey('chapter')) {
+      context.handle(
+        _chapterMeta,
+        chapter.isAcceptableOrUnknown(data['chapter']!, _chapterMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_chapterMeta);
+    }
+    if (data.containsKey('verse')) {
+      context.handle(
+        _verseMeta,
+        verse.isAcceptableOrUnknown(data['verse']!, _verseMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_verseMeta);
+    }
+    if (data.containsKey('text')) {
+      context.handle(
+        _contentMeta,
+        content.isAcceptableOrUnknown(data['text']!, _contentMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_contentMeta);
+    }
+    if (data.containsKey('source_text')) {
+      context.handle(
+        _sourceTextMeta,
+        sourceText.isAcceptableOrUnknown(data['source_text']!, _sourceTextMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sourceTextMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {
+    translationId,
+    bookId,
+    chapter,
+    verse,
+  };
+  @override
+  BibleVerse map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return BibleVerse(
+      translationId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}translation_id'],
+      )!,
+      bookId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}book_id'],
+      )!,
+      chapter: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}chapter'],
+      )!,
+      verse: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}verse'],
+      )!,
+      content: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}text'],
+      )!,
+      sourceText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}source_text'],
+      )!,
+    );
+  }
+
+  @override
+  $BibleVersesTable createAlias(String alias) {
+    return $BibleVersesTable(attachedDatabase, alias);
+  }
+}
+
+class BibleVerse extends DataClass implements Insertable<BibleVerse> {
+  final String translationId;
+  final String bookId;
+  final int chapter;
+  final int verse;
+  final String content;
+  final String sourceText;
+  const BibleVerse({
+    required this.translationId,
+    required this.bookId,
+    required this.chapter,
+    required this.verse,
+    required this.content,
+    required this.sourceText,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['translation_id'] = Variable<String>(translationId);
+    map['book_id'] = Variable<String>(bookId);
+    map['chapter'] = Variable<int>(chapter);
+    map['verse'] = Variable<int>(verse);
+    map['text'] = Variable<String>(content);
+    map['source_text'] = Variable<String>(sourceText);
+    return map;
+  }
+
+  BibleVersesCompanion toCompanion(bool nullToAbsent) {
+    return BibleVersesCompanion(
+      translationId: Value(translationId),
+      bookId: Value(bookId),
+      chapter: Value(chapter),
+      verse: Value(verse),
+      content: Value(content),
+      sourceText: Value(sourceText),
+    );
+  }
+
+  factory BibleVerse.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return BibleVerse(
+      translationId: serializer.fromJson<String>(json['translationId']),
+      bookId: serializer.fromJson<String>(json['bookId']),
+      chapter: serializer.fromJson<int>(json['chapter']),
+      verse: serializer.fromJson<int>(json['verse']),
+      content: serializer.fromJson<String>(json['content']),
+      sourceText: serializer.fromJson<String>(json['sourceText']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'translationId': serializer.toJson<String>(translationId),
+      'bookId': serializer.toJson<String>(bookId),
+      'chapter': serializer.toJson<int>(chapter),
+      'verse': serializer.toJson<int>(verse),
+      'content': serializer.toJson<String>(content),
+      'sourceText': serializer.toJson<String>(sourceText),
+    };
+  }
+
+  BibleVerse copyWith({
+    String? translationId,
+    String? bookId,
+    int? chapter,
+    int? verse,
+    String? content,
+    String? sourceText,
+  }) => BibleVerse(
+    translationId: translationId ?? this.translationId,
+    bookId: bookId ?? this.bookId,
+    chapter: chapter ?? this.chapter,
+    verse: verse ?? this.verse,
+    content: content ?? this.content,
+    sourceText: sourceText ?? this.sourceText,
+  );
+  BibleVerse copyWithCompanion(BibleVersesCompanion data) {
+    return BibleVerse(
+      translationId: data.translationId.present
+          ? data.translationId.value
+          : this.translationId,
+      bookId: data.bookId.present ? data.bookId.value : this.bookId,
+      chapter: data.chapter.present ? data.chapter.value : this.chapter,
+      verse: data.verse.present ? data.verse.value : this.verse,
+      content: data.content.present ? data.content.value : this.content,
+      sourceText: data.sourceText.present
+          ? data.sourceText.value
+          : this.sourceText,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BibleVerse(')
+          ..write('translationId: $translationId, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapter: $chapter, ')
+          ..write('verse: $verse, ')
+          ..write('content: $content, ')
+          ..write('sourceText: $sourceText')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(translationId, bookId, chapter, verse, content, sourceText);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is BibleVerse &&
+          other.translationId == this.translationId &&
+          other.bookId == this.bookId &&
+          other.chapter == this.chapter &&
+          other.verse == this.verse &&
+          other.content == this.content &&
+          other.sourceText == this.sourceText);
+}
+
+class BibleVersesCompanion extends UpdateCompanion<BibleVerse> {
+  final Value<String> translationId;
+  final Value<String> bookId;
+  final Value<int> chapter;
+  final Value<int> verse;
+  final Value<String> content;
+  final Value<String> sourceText;
+  final Value<int> rowid;
+  const BibleVersesCompanion({
+    this.translationId = const Value.absent(),
+    this.bookId = const Value.absent(),
+    this.chapter = const Value.absent(),
+    this.verse = const Value.absent(),
+    this.content = const Value.absent(),
+    this.sourceText = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  BibleVersesCompanion.insert({
+    required String translationId,
+    required String bookId,
+    required int chapter,
+    required int verse,
+    required String content,
+    required String sourceText,
+    this.rowid = const Value.absent(),
+  }) : translationId = Value(translationId),
+       bookId = Value(bookId),
+       chapter = Value(chapter),
+       verse = Value(verse),
+       content = Value(content),
+       sourceText = Value(sourceText);
+  static Insertable<BibleVerse> custom({
+    Expression<String>? translationId,
+    Expression<String>? bookId,
+    Expression<int>? chapter,
+    Expression<int>? verse,
+    Expression<String>? content,
+    Expression<String>? sourceText,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (translationId != null) 'translation_id': translationId,
+      if (bookId != null) 'book_id': bookId,
+      if (chapter != null) 'chapter': chapter,
+      if (verse != null) 'verse': verse,
+      if (content != null) 'text': content,
+      if (sourceText != null) 'source_text': sourceText,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  BibleVersesCompanion copyWith({
+    Value<String>? translationId,
+    Value<String>? bookId,
+    Value<int>? chapter,
+    Value<int>? verse,
+    Value<String>? content,
+    Value<String>? sourceText,
+    Value<int>? rowid,
+  }) {
+    return BibleVersesCompanion(
+      translationId: translationId ?? this.translationId,
+      bookId: bookId ?? this.bookId,
+      chapter: chapter ?? this.chapter,
+      verse: verse ?? this.verse,
+      content: content ?? this.content,
+      sourceText: sourceText ?? this.sourceText,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (translationId.present) {
+      map['translation_id'] = Variable<String>(translationId.value);
+    }
+    if (bookId.present) {
+      map['book_id'] = Variable<String>(bookId.value);
+    }
+    if (chapter.present) {
+      map['chapter'] = Variable<int>(chapter.value);
+    }
+    if (verse.present) {
+      map['verse'] = Variable<int>(verse.value);
+    }
+    if (content.present) {
+      map['text'] = Variable<String>(content.value);
+    }
+    if (sourceText.present) {
+      map['source_text'] = Variable<String>(sourceText.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BibleVersesCompanion(')
+          ..write('translationId: $translationId, ')
+          ..write('bookId: $bookId, ')
+          ..write('chapter: $chapter, ')
+          ..write('verse: $verse, ')
+          ..write('content: $content, ')
+          ..write('sourceText: $sourceText, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3541,6 +4490,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this,
   );
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $BibleTranslationsTable bibleTranslations =
+      $BibleTranslationsTable(this);
+  late final $BibleVersesTable bibleVerses = $BibleVersesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3553,6 +4505,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     sermonPreachedDates,
     documentVersions,
     appSettings,
+    bibleTranslations,
+    bibleVerses,
   ];
 }
 
@@ -6236,6 +7190,507 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSetting,
       PrefetchHooks Function()
     >;
+typedef $$BibleTranslationsTableCreateCompanionBuilder =
+    BibleTranslationsCompanion Function({
+      required String id,
+      required String abbreviation,
+      required String name,
+      required String language,
+      required String source,
+      required String copyrightNotice,
+      required int dataVersion,
+      required DateTime importedAt,
+      Value<int> rowid,
+    });
+typedef $$BibleTranslationsTableUpdateCompanionBuilder =
+    BibleTranslationsCompanion Function({
+      Value<String> id,
+      Value<String> abbreviation,
+      Value<String> name,
+      Value<String> language,
+      Value<String> source,
+      Value<String> copyrightNotice,
+      Value<int> dataVersion,
+      Value<DateTime> importedAt,
+      Value<int> rowid,
+    });
+
+class $$BibleTranslationsTableFilterComposer
+    extends Composer<_$AppDatabase, $BibleTranslationsTable> {
+  $$BibleTranslationsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get abbreviation => $composableBuilder(
+    column: $table.abbreviation,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get copyrightNotice => $composableBuilder(
+    column: $table.copyrightNotice,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dataVersion => $composableBuilder(
+    column: $table.dataVersion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BibleTranslationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $BibleTranslationsTable> {
+  $$BibleTranslationsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get abbreviation => $composableBuilder(
+    column: $table.abbreviation,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get language => $composableBuilder(
+    column: $table.language,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get source => $composableBuilder(
+    column: $table.source,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get copyrightNotice => $composableBuilder(
+    column: $table.copyrightNotice,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dataVersion => $composableBuilder(
+    column: $table.dataVersion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BibleTranslationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BibleTranslationsTable> {
+  $$BibleTranslationsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get abbreviation => $composableBuilder(
+    column: $table.abbreviation,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get language =>
+      $composableBuilder(column: $table.language, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get copyrightNotice => $composableBuilder(
+    column: $table.copyrightNotice,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get dataVersion => $composableBuilder(
+    column: $table.dataVersion,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get importedAt => $composableBuilder(
+    column: $table.importedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$BibleTranslationsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BibleTranslationsTable,
+          BibleTranslation,
+          $$BibleTranslationsTableFilterComposer,
+          $$BibleTranslationsTableOrderingComposer,
+          $$BibleTranslationsTableAnnotationComposer,
+          $$BibleTranslationsTableCreateCompanionBuilder,
+          $$BibleTranslationsTableUpdateCompanionBuilder,
+          (
+            BibleTranslation,
+            BaseReferences<
+              _$AppDatabase,
+              $BibleTranslationsTable,
+              BibleTranslation
+            >,
+          ),
+          BibleTranslation,
+          PrefetchHooks Function()
+        > {
+  $$BibleTranslationsTableTableManager(
+    _$AppDatabase db,
+    $BibleTranslationsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BibleTranslationsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BibleTranslationsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BibleTranslationsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> abbreviation = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> language = const Value.absent(),
+                Value<String> source = const Value.absent(),
+                Value<String> copyrightNotice = const Value.absent(),
+                Value<int> dataVersion = const Value.absent(),
+                Value<DateTime> importedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BibleTranslationsCompanion(
+                id: id,
+                abbreviation: abbreviation,
+                name: name,
+                language: language,
+                source: source,
+                copyrightNotice: copyrightNotice,
+                dataVersion: dataVersion,
+                importedAt: importedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String abbreviation,
+                required String name,
+                required String language,
+                required String source,
+                required String copyrightNotice,
+                required int dataVersion,
+                required DateTime importedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => BibleTranslationsCompanion.insert(
+                id: id,
+                abbreviation: abbreviation,
+                name: name,
+                language: language,
+                source: source,
+                copyrightNotice: copyrightNotice,
+                dataVersion: dataVersion,
+                importedAt: importedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BibleTranslationsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BibleTranslationsTable,
+      BibleTranslation,
+      $$BibleTranslationsTableFilterComposer,
+      $$BibleTranslationsTableOrderingComposer,
+      $$BibleTranslationsTableAnnotationComposer,
+      $$BibleTranslationsTableCreateCompanionBuilder,
+      $$BibleTranslationsTableUpdateCompanionBuilder,
+      (
+        BibleTranslation,
+        BaseReferences<
+          _$AppDatabase,
+          $BibleTranslationsTable,
+          BibleTranslation
+        >,
+      ),
+      BibleTranslation,
+      PrefetchHooks Function()
+    >;
+typedef $$BibleVersesTableCreateCompanionBuilder =
+    BibleVersesCompanion Function({
+      required String translationId,
+      required String bookId,
+      required int chapter,
+      required int verse,
+      required String content,
+      required String sourceText,
+      Value<int> rowid,
+    });
+typedef $$BibleVersesTableUpdateCompanionBuilder =
+    BibleVersesCompanion Function({
+      Value<String> translationId,
+      Value<String> bookId,
+      Value<int> chapter,
+      Value<int> verse,
+      Value<String> content,
+      Value<String> sourceText,
+      Value<int> rowid,
+    });
+
+class $$BibleVersesTableFilterComposer
+    extends Composer<_$AppDatabase, $BibleVersesTable> {
+  $$BibleVersesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get translationId => $composableBuilder(
+    column: $table.translationId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get chapter => $composableBuilder(
+    column: $table.chapter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get verse => $composableBuilder(
+    column: $table.verse,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get sourceText => $composableBuilder(
+    column: $table.sourceText,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$BibleVersesTableOrderingComposer
+    extends Composer<_$AppDatabase, $BibleVersesTable> {
+  $$BibleVersesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get translationId => $composableBuilder(
+    column: $table.translationId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get bookId => $composableBuilder(
+    column: $table.bookId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get chapter => $composableBuilder(
+    column: $table.chapter,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get verse => $composableBuilder(
+    column: $table.verse,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get content => $composableBuilder(
+    column: $table.content,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get sourceText => $composableBuilder(
+    column: $table.sourceText,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$BibleVersesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BibleVersesTable> {
+  $$BibleVersesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get translationId => $composableBuilder(
+    column: $table.translationId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get bookId =>
+      $composableBuilder(column: $table.bookId, builder: (column) => column);
+
+  GeneratedColumn<int> get chapter =>
+      $composableBuilder(column: $table.chapter, builder: (column) => column);
+
+  GeneratedColumn<int> get verse =>
+      $composableBuilder(column: $table.verse, builder: (column) => column);
+
+  GeneratedColumn<String> get content =>
+      $composableBuilder(column: $table.content, builder: (column) => column);
+
+  GeneratedColumn<String> get sourceText => $composableBuilder(
+    column: $table.sourceText,
+    builder: (column) => column,
+  );
+}
+
+class $$BibleVersesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $BibleVersesTable,
+          BibleVerse,
+          $$BibleVersesTableFilterComposer,
+          $$BibleVersesTableOrderingComposer,
+          $$BibleVersesTableAnnotationComposer,
+          $$BibleVersesTableCreateCompanionBuilder,
+          $$BibleVersesTableUpdateCompanionBuilder,
+          (
+            BibleVerse,
+            BaseReferences<_$AppDatabase, $BibleVersesTable, BibleVerse>,
+          ),
+          BibleVerse,
+          PrefetchHooks Function()
+        > {
+  $$BibleVersesTableTableManager(_$AppDatabase db, $BibleVersesTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BibleVersesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BibleVersesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BibleVersesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> translationId = const Value.absent(),
+                Value<String> bookId = const Value.absent(),
+                Value<int> chapter = const Value.absent(),
+                Value<int> verse = const Value.absent(),
+                Value<String> content = const Value.absent(),
+                Value<String> sourceText = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => BibleVersesCompanion(
+                translationId: translationId,
+                bookId: bookId,
+                chapter: chapter,
+                verse: verse,
+                content: content,
+                sourceText: sourceText,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String translationId,
+                required String bookId,
+                required int chapter,
+                required int verse,
+                required String content,
+                required String sourceText,
+                Value<int> rowid = const Value.absent(),
+              }) => BibleVersesCompanion.insert(
+                translationId: translationId,
+                bookId: bookId,
+                chapter: chapter,
+                verse: verse,
+                content: content,
+                sourceText: sourceText,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$BibleVersesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $BibleVersesTable,
+      BibleVerse,
+      $$BibleVersesTableFilterComposer,
+      $$BibleVersesTableOrderingComposer,
+      $$BibleVersesTableAnnotationComposer,
+      $$BibleVersesTableCreateCompanionBuilder,
+      $$BibleVersesTableUpdateCompanionBuilder,
+      (
+        BibleVerse,
+        BaseReferences<_$AppDatabase, $BibleVersesTable, BibleVerse>,
+      ),
+      BibleVerse,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6254,4 +7709,8 @@ class $AppDatabaseManager {
       $$DocumentVersionsTableTableManager(_db, _db.documentVersions);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$BibleTranslationsTableTableManager get bibleTranslations =>
+      $$BibleTranslationsTableTableManager(_db, _db.bibleTranslations);
+  $$BibleVersesTableTableManager get bibleVerses =>
+      $$BibleVersesTableTableManager(_db, _db.bibleVerses);
 }

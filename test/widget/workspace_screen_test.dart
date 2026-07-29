@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sermonary/app/providers.dart';
 import 'package:sermonary/app/theme/app_theme.dart';
 import 'package:sermonary/core/database/app_database.dart';
+import 'package:sermonary/features/bible/domain/bible_provider.dart';
 import 'package:sermonary/features/bible/domain/bible_reference.dart';
 import 'package:sermonary/features/library/data/sermon_repository.dart';
 import 'package:sermonary/features/library/domain/sermon.dart';
@@ -276,6 +277,73 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));
   });
+
+  testWidgets('ELB85 selection inserts a local Bible passage', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DriftSermonRepository(database);
+    final created = await repository.create();
+    final sermon = created.copyWith(
+      title: 'Lokaler Bibeltext',
+      primaryBibleReference: BibleReferenceParser().parse('Johannes 3,16'),
+    );
+    await repository.update(sermon);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(database),
+          bibleProviderProvider.overrideWithValue(_FakeElb85Provider()),
+          bootstrapProvider.overrideWith((ref) async {}),
+        ],
+        child: MaterialApp(
+          theme: buildTheme(Brightness.light),
+          home: SermonWorkspaceScreen(
+            sermonId: sermon.id,
+            initialView: WorkspaceView.script,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Bibelstelle einfügen'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('bible-text-field')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('elb85-mode')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('bible-text-field')), findsNothing);
+    expect(find.byKey(const Key('bible-book-field')), findsOneWidget);
+    expect(find.byKey(const Key('bible-chapter-field')), findsOneWidget);
+    expect(find.byKey(const Key('bible-verse-from-field')), findsOneWidget);
+    expect(find.byKey(const Key('bible-verse-to-field')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('bible-verse-to-field')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('17').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('insert-bible-reference')));
+    await tester.pump(const Duration(milliseconds: 700));
+
+    final saved = sermonFromRow(
+      await (database.select(
+        database.sermonRows,
+      )..where((row) => row.id.equals(sermon.id))).getSingle(),
+    );
+    expect(
+      saved.document.blocks.whereType<QuoteBlock>().map((block) => block.text),
+      contains(
+        'Denn so sehr hat Gott die Welt geliebt. '
+        'Denn Gott hat seinen Sohn gesandt. Johannes 3: 16-17',
+      ),
+    );
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
 }
 
 class _DelayedSermonRepository implements SermonRepository {
@@ -313,4 +381,42 @@ class _DelayedSermonRepository implements SermonRepository {
   @override
   Future<void> saveVersion(String id, String reason) =>
       delegate.saveVersion(id, reason);
+}
+
+class _FakeElb85Provider implements BibleProvider {
+  @override
+  Future<void> prepare() async {}
+
+  @override
+  Future<List<BibleTranslationInfo>> listTranslations() async => const [
+    BibleTranslationInfo(id: 'elb85', label: 'ELB85', isOffline: true),
+  ];
+
+  @override
+  Future<List<int>> listChapters(String translationId, String bookId) async => [
+    3,
+  ];
+
+  @override
+  Future<List<int>> listVerses(
+    String translationId,
+    String bookId,
+    int chapter,
+  ) async => [16, 17];
+
+  @override
+  Future<BiblePassage?> getPassage(
+    BibleReference reference,
+    String translationId,
+  ) async => BiblePassage(
+    reference: reference,
+    translationId: translationId,
+    text:
+        'Denn so sehr hat Gott die Welt geliebt. '
+        'Denn Gott hat seinen Sohn gesandt.',
+    copyrightNotice: 'Test',
+  );
+
+  @override
+  Future<List<BibleSearchResult>> search(String query) async => const [];
 }
