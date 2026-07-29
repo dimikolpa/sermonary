@@ -17,6 +17,7 @@ class SermonRows extends Table {
   TextColumn get subtitle => text().withDefault(const Constant(''))();
   TextColumn get status => text()();
   TextColumn get sermonType => text()();
+  TextColumn get contentKind => text().withDefault(const Constant('sermon'))();
   TextColumn get primaryBibleReferenceJson => text().nullable()();
   TextColumn get additionalBibleReferencesJson =>
       text().withDefault(const Constant('[]'))();
@@ -113,13 +114,16 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'sermonary'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (migrator) => migrator.createAll(),
     onUpgrade: (migrator, from, to) async {
       if (from > to) throw StateError('Datenbank-Downgrade nicht unterstützt');
+      if (from < 2) {
+        await migrator.addColumn(sermonRows, sermonRows.contentKind);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
@@ -136,6 +140,7 @@ domain.Sermon sermonFromRow(SermonRow row) {
     subtitle: row.subtitle,
     status: domain.SermonStatus.values.byName(row.status),
     sermonType: domain.SermonType.values.byName(row.sermonType),
+    contentKind: domain.ContentKind.values.byName(row.contentKind),
     primaryBibleReference: primaryJson == null
         ? null
         : BibleReference.fromJson(
@@ -180,6 +185,7 @@ SermonRowsCompanion sermonToCompanion(domain.Sermon sermon) =>
       subtitle: Value(sermon.subtitle),
       status: sermon.status.name,
       sermonType: sermon.sermonType.name,
+      contentKind: Value(sermon.contentKind.name),
       primaryBibleReferenceJson: Value(
         sermon.primaryBibleReference == null
             ? null

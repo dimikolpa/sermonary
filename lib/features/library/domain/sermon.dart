@@ -3,6 +3,8 @@ import 'package:sermonary/features/sermon_editor/domain/sermon_document.dart';
 
 enum SermonStatus { draft, inProgress, ready, preached, archived }
 
+enum ContentKind { sermon, talk, shortTopic }
+
 enum SermonType {
   expository,
   topical,
@@ -45,6 +47,7 @@ class Sermon {
     this.plannedDurationMinutes,
     this.actualDurationMinutes,
     this.deletedAt,
+    this.contentKind = ContentKind.sermon,
   });
 
   final String id;
@@ -53,6 +56,7 @@ class Sermon {
   final String subtitle;
   final SermonStatus status;
   final SermonType sermonType;
+  final ContentKind contentKind;
   final BibleReference? primaryBibleReference;
   final List<BibleReference> additionalBibleReferences;
   final String? seriesId;
@@ -79,6 +83,7 @@ class Sermon {
     String? subtitle,
     SermonStatus? status,
     SermonType? sermonType,
+    ContentKind? contentKind,
     BibleReference? primaryBibleReference,
     bool clearPrimaryBibleReference = false,
     String? seriesId,
@@ -103,6 +108,7 @@ class Sermon {
     subtitle: subtitle ?? this.subtitle,
     status: status ?? this.status,
     sermonType: sermonType ?? this.sermonType,
+    contentKind: contentKind ?? this.contentKind,
     primaryBibleReference: clearPrimaryBibleReference
         ? null
         : primaryBibleReference ?? this.primaryBibleReference,

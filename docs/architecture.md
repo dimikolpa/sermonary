@@ -20,7 +20,8 @@ Schema-Version.
 
 ## Persistenz
 
-Drift verwaltet ein SQLite-Schema der Version 1. Das Dokument liegt als
+Drift verwaltet ein SQLite-Schema der Version 2. Version 2 ergänzt die
+Inhaltskategorie additiv und erhält alle V1-Daten. Das Dokument liegt als
 deterministisches JSON und zusätzlich als extrahierter Klartext für die lokale
 Suche vor. Repositorys übersetzen explizit zwischen Drift-Zeilen und
 Domainobjekten. Flutter-Widgetzustand wird nicht gespeichert.

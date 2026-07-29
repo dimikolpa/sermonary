@@ -7,7 +7,9 @@ schreibgeschützte Vortragansicht in einem gemeinsamen, versionierten Dokument.
 ## Aktueller Funktionsumfang
 
 - lokale Drift-/SQLite-Bibliothek mit Entwicklungs-Beispieldaten
-- neue Predigten, Duplikate, Suche, Sortierung und Statusansichten
+- dynamisches Bibelbucharchiv mit kanonischer Buch- und Abschnittssortierung
+- getrennte Bereiche für Vortragsreihen, Vorträge und Kurzthemen
+- neue Einträge, Duplikate, Suche und Sortierung
 - Papierkorb mit Wiederherstellen und endgültigem Löschen
 - Metadaten-Inspector
 - Rawmode mit stabilen Stichpunkt-IDs, Ein-/Ausrücken und Verschieben
@@ -88,8 +90,8 @@ zwischen Bibliothek, Raw-, Script- und Livemode. Weitere Details stehen in
 - Bildschirm-Aktivhalten ist als Plattformgrenze definiert, aber ohne native
   macOS-Implementierung.
 - Die Suche ist eine gekapselte lokale `contains`-Suche; FTS5 folgt später.
-- Serien können zugeordnet gespeichert werden, eine vollständige Serienverwaltung
-  folgt in Phase 2.
+- Reihen werden dynamisch in der Archivnavigation angezeigt; Umbenennen und
+  Archivieren ganzer Reihen folgt in Phase 2.
 
 ## Roadmap
 

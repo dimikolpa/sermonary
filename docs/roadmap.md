@@ -4,7 +4,7 @@
 
 - visuelle QA auf mehreren macOS-Fenstergrößen
 - präzise Outline-Sprungmarken im Editor und Livemode
-- Serienverwaltung und Serienfilter vervollständigen
+- Reihen umbenennen und als Ganzes archivieren
 - Editor-Widgettests für alle Blocktypen und Tastaturpfade
 - nativer Keep-awake-Adapter mit klarer Berechtigungs-/Fehleranzeige
 

@@ -7,6 +7,14 @@ Predigtart, strukturierte Bibelstellen, Serie/Position, Themen, Tags, Zielgruppe
 Ort, Plan- und Ist-Dauer, Predigttermine, UTC-Zeitstempel, Favorit/Papierkorb,
 Revision und genau ein `SermonDocument`.
 
+`contentKind` trennt die Archivbereiche mit stabilen Werten `sermon`, `talk`
+und `shortTopic`. Bestehende Datensätze werden bei der V1→V2-Migration als
+`sermon` eingeordnet.
+
+Die Bibliotheksnavigation wird nicht als redundante Ordnerstruktur gespeichert.
+Sie entsteht aus strukturierten Bibelstellen und Reihen-IDs: Nur Bibelbücher mit
+mindestens einer vorhandenen Predigt erscheinen, in kanonischer Reihenfolge.
+
 Gespeicherte Enumwerte sind sprachunabhängige Bezeichner wie `inProgress` oder
 `expository`. Deutsche Labels entstehen ausschließlich in der UI.
 

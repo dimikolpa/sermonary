@@ -1140,6 +1140,40 @@ class _MetadataInspector extends StatelessWidget {
           },
         ),
         const SizedBox(height: 10),
+        DropdownButtonFormField<ContentKind>(
+          initialValue: sermon.contentKind,
+          decoration: const InputDecoration(labelText: 'Archivbereich'),
+          items: [
+            for (final kind in ContentKind.values)
+              DropdownMenuItem(
+                value: kind,
+                child: Text(_contentKindName(kind)),
+              ),
+          ],
+          onChanged: (value) {
+            if (value != null) onChanged(sermon.copyWith(contentKind: value));
+          },
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          initialValue: sermon.seriesId ?? '',
+          decoration: const InputDecoration(labelText: 'Vortragsreihe'),
+          onChanged: (value) =>
+              onChanged(sermon.copyWith(seriesId: value.trim())),
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          initialValue: sermon.seriesPosition?.toString() ?? '',
+          decoration: const InputDecoration(labelText: 'Position in der Reihe'),
+          keyboardType: TextInputType.number,
+          onChanged: (value) {
+            final position = int.tryParse(value);
+            if (position != null) {
+              onChanged(sermon.copyWith(seriesPosition: position));
+            }
+          },
+        ),
+        const SizedBox(height: 10),
         DropdownButtonFormField<SermonType>(
           initialValue: sermon.sermonType,
           decoration: const InputDecoration(labelText: 'Predigtart'),
@@ -1206,6 +1240,12 @@ class _MetadataInspector extends StatelessWidget {
     SermonStatus.ready => 'Bereit',
     SermonStatus.preached => 'Gehalten',
     SermonStatus.archived => 'Archiviert',
+  };
+
+  String _contentKindName(ContentKind kind) => switch (kind) {
+    ContentKind.sermon => 'Predigt',
+    ContentKind.talk => 'Vortrag',
+    ContentKind.shortTopic => 'Kurzthema',
   };
 
   String _typeName(SermonType type) => switch (type) {

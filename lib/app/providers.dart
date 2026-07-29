@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sermonary/core/database/app_database.dart';
 import 'package:sermonary/features/bible/domain/bible_provider.dart';
+import 'package:sermonary/features/bible/domain/bible_reference.dart';
 import 'package:sermonary/features/export/application/export_service.dart';
 import 'package:sermonary/features/library/data/sermon_repository.dart';
 import 'package:sermonary/features/library/domain/sermon.dart';
@@ -37,9 +38,28 @@ final StreamProviderFamily<Sermon?, String> sermonProvider =
 final bootstrapProvider = FutureProvider<void>((ref) async {
   if (const bool.fromEnvironment('dart.vm.product')) return;
   final database = ref.watch(databaseProvider);
-  final existing = await database.select(database.sermonRows).get();
-  if (existing.isNotEmpty) return;
   final repository = ref.watch(sermonRepositoryProvider);
+  final existing = await database.select(database.sermonRows).get();
+  if (existing.isNotEmpty) {
+    const demoReferences = {
+      'Zu wem sollen wir gehen?': 'Johannes 6,60–71',
+      'Kommt her zu mir': 'Matthäus 11,28–30',
+      'Die erste Liebe': 'Offenbarung 2,1–7',
+    };
+    for (final row in existing) {
+      final sermon = sermonFromRow(row);
+      final referenceText = demoReferences[sermon.title];
+      if (sermon.primaryBibleReference == null && referenceText != null) {
+        await repository.update(
+          sermon.copyWith(
+            primaryBibleReference: BibleReferenceParser().parse(referenceText),
+            subtitle: sermon.subtitle == referenceText ? '' : sermon.subtitle,
+          ),
+        );
+      }
+    }
+    return;
+  }
   const uuid = Uuid();
   final examples = [
     (
@@ -68,7 +88,7 @@ final bootstrapProvider = FutureProvider<void>((ref) async {
       sermon.copyWith(
         title: example.$1,
         status: example.$2,
-        subtitle: example.$3,
+        primaryBibleReference: BibleReferenceParser().parse(example.$3),
         document: SermonDocument(
           schemaVersion: 1,
           blocks: [

@@ -70,6 +70,18 @@ class $SermonRowsTable extends SermonRows
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _contentKindMeta = const VerificationMeta(
+    'contentKind',
+  );
+  @override
+  late final GeneratedColumn<String> contentKind = GeneratedColumn<String>(
+    'content_kind',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('sermon'),
+  );
   static const VerificationMeta _primaryBibleReferenceJsonMeta =
       const VerificationMeta('primaryBibleReferenceJson');
   @override
@@ -323,6 +335,7 @@ class $SermonRowsTable extends SermonRows
     subtitle,
     status,
     sermonType,
+    contentKind,
     primaryBibleReferenceJson,
     additionalBibleReferencesJson,
     documentJson,
@@ -402,6 +415,15 @@ class $SermonRowsTable extends SermonRows
       );
     } else if (isInserting) {
       context.missing(_sermonTypeMeta);
+    }
+    if (data.containsKey('content_kind')) {
+      context.handle(
+        _contentKindMeta,
+        contentKind.isAcceptableOrUnknown(
+          data['content_kind']!,
+          _contentKindMeta,
+        ),
+      );
     }
     if (data.containsKey('primary_bible_reference_json')) {
       context.handle(
@@ -600,6 +622,10 @@ class $SermonRowsTable extends SermonRows
         DriftSqlType.string,
         data['${effectivePrefix}sermon_type'],
       )!,
+      contentKind: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}content_kind'],
+      )!,
       primaryBibleReferenceJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}primary_bible_reference_json'],
@@ -700,6 +726,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
   final String subtitle;
   final String status;
   final String sermonType;
+  final String contentKind;
   final String? primaryBibleReferenceJson;
   final String additionalBibleReferencesJson;
   final String documentJson;
@@ -728,6 +755,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     required this.subtitle,
     required this.status,
     required this.sermonType,
+    required this.contentKind,
     this.primaryBibleReferenceJson,
     required this.additionalBibleReferencesJson,
     required this.documentJson,
@@ -759,6 +787,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     map['subtitle'] = Variable<String>(subtitle);
     map['status'] = Variable<String>(status);
     map['sermon_type'] = Variable<String>(sermonType);
+    map['content_kind'] = Variable<String>(contentKind);
     if (!nullToAbsent || primaryBibleReferenceJson != null) {
       map['primary_bible_reference_json'] = Variable<String>(
         primaryBibleReferenceJson,
@@ -813,6 +842,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       subtitle: Value(subtitle),
       status: Value(status),
       sermonType: Value(sermonType),
+      contentKind: Value(contentKind),
       primaryBibleReferenceJson:
           primaryBibleReferenceJson == null && nullToAbsent
           ? const Value.absent()
@@ -868,6 +898,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       subtitle: serializer.fromJson<String>(json['subtitle']),
       status: serializer.fromJson<String>(json['status']),
       sermonType: serializer.fromJson<String>(json['sermonType']),
+      contentKind: serializer.fromJson<String>(json['contentKind']),
       primaryBibleReferenceJson: serializer.fromJson<String?>(
         json['primaryBibleReferenceJson'],
       ),
@@ -909,6 +940,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       'subtitle': serializer.toJson<String>(subtitle),
       'status': serializer.toJson<String>(status),
       'sermonType': serializer.toJson<String>(sermonType),
+      'contentKind': serializer.toJson<String>(contentKind),
       'primaryBibleReferenceJson': serializer.toJson<String?>(
         primaryBibleReferenceJson,
       ),
@@ -944,6 +976,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     String? subtitle,
     String? status,
     String? sermonType,
+    String? contentKind,
     Value<String?> primaryBibleReferenceJson = const Value.absent(),
     String? additionalBibleReferencesJson,
     String? documentJson,
@@ -972,6 +1005,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     subtitle: subtitle ?? this.subtitle,
     status: status ?? this.status,
     sermonType: sermonType ?? this.sermonType,
+    contentKind: contentKind ?? this.contentKind,
     primaryBibleReferenceJson: primaryBibleReferenceJson.present
         ? primaryBibleReferenceJson.value
         : this.primaryBibleReferenceJson,
@@ -1015,6 +1049,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       sermonType: data.sermonType.present
           ? data.sermonType.value
           : this.sermonType,
+      contentKind: data.contentKind.present
+          ? data.contentKind.value
+          : this.contentKind,
       primaryBibleReferenceJson: data.primaryBibleReferenceJson.present
           ? data.primaryBibleReferenceJson.value
           : this.primaryBibleReferenceJson,
@@ -1072,6 +1109,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
           ..write('subtitle: $subtitle, ')
           ..write('status: $status, ')
           ..write('sermonType: $sermonType, ')
+          ..write('contentKind: $contentKind, ')
           ..write('primaryBibleReferenceJson: $primaryBibleReferenceJson, ')
           ..write(
             'additionalBibleReferencesJson: $additionalBibleReferencesJson, ',
@@ -1107,6 +1145,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     subtitle,
     status,
     sermonType,
+    contentKind,
     primaryBibleReferenceJson,
     additionalBibleReferencesJson,
     documentJson,
@@ -1139,6 +1178,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
           other.subtitle == this.subtitle &&
           other.status == this.status &&
           other.sermonType == this.sermonType &&
+          other.contentKind == this.contentKind &&
           other.primaryBibleReferenceJson == this.primaryBibleReferenceJson &&
           other.additionalBibleReferencesJson ==
               this.additionalBibleReferencesJson &&
@@ -1170,6 +1210,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
   final Value<String> subtitle;
   final Value<String> status;
   final Value<String> sermonType;
+  final Value<String> contentKind;
   final Value<String?> primaryBibleReferenceJson;
   final Value<String> additionalBibleReferencesJson;
   final Value<String> documentJson;
@@ -1199,6 +1240,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     this.subtitle = const Value.absent(),
     this.status = const Value.absent(),
     this.sermonType = const Value.absent(),
+    this.contentKind = const Value.absent(),
     this.primaryBibleReferenceJson = const Value.absent(),
     this.additionalBibleReferencesJson = const Value.absent(),
     this.documentJson = const Value.absent(),
@@ -1229,6 +1271,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     this.subtitle = const Value.absent(),
     required String status,
     required String sermonType,
+    this.contentKind = const Value.absent(),
     this.primaryBibleReferenceJson = const Value.absent(),
     this.additionalBibleReferencesJson = const Value.absent(),
     required String documentJson,
@@ -1267,6 +1310,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     Expression<String>? subtitle,
     Expression<String>? status,
     Expression<String>? sermonType,
+    Expression<String>? contentKind,
     Expression<String>? primaryBibleReferenceJson,
     Expression<String>? additionalBibleReferencesJson,
     Expression<String>? documentJson,
@@ -1297,6 +1341,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
       if (subtitle != null) 'subtitle': subtitle,
       if (status != null) 'status': status,
       if (sermonType != null) 'sermon_type': sermonType,
+      if (contentKind != null) 'content_kind': contentKind,
       if (primaryBibleReferenceJson != null)
         'primary_bible_reference_json': primaryBibleReferenceJson,
       if (additionalBibleReferencesJson != null)
@@ -1333,6 +1378,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     Value<String>? subtitle,
     Value<String>? status,
     Value<String>? sermonType,
+    Value<String>? contentKind,
     Value<String?>? primaryBibleReferenceJson,
     Value<String>? additionalBibleReferencesJson,
     Value<String>? documentJson,
@@ -1363,6 +1409,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
       subtitle: subtitle ?? this.subtitle,
       status: status ?? this.status,
       sermonType: sermonType ?? this.sermonType,
+      contentKind: contentKind ?? this.contentKind,
       primaryBibleReferenceJson:
           primaryBibleReferenceJson ?? this.primaryBibleReferenceJson,
       additionalBibleReferencesJson:
@@ -1412,6 +1459,9 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     }
     if (sermonType.present) {
       map['sermon_type'] = Variable<String>(sermonType.value);
+    }
+    if (contentKind.present) {
+      map['content_kind'] = Variable<String>(contentKind.value);
     }
     if (primaryBibleReferenceJson.present) {
       map['primary_bible_reference_json'] = Variable<String>(
@@ -1499,6 +1549,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
           ..write('subtitle: $subtitle, ')
           ..write('status: $status, ')
           ..write('sermonType: $sermonType, ')
+          ..write('contentKind: $contentKind, ')
           ..write('primaryBibleReferenceJson: $primaryBibleReferenceJson, ')
           ..write(
             'additionalBibleReferencesJson: $additionalBibleReferencesJson, ',
@@ -3513,6 +3564,7 @@ typedef $$SermonRowsTableCreateCompanionBuilder =
       Value<String> subtitle,
       required String status,
       required String sermonType,
+      Value<String> contentKind,
       Value<String?> primaryBibleReferenceJson,
       Value<String> additionalBibleReferencesJson,
       required String documentJson,
@@ -3544,6 +3596,7 @@ typedef $$SermonRowsTableUpdateCompanionBuilder =
       Value<String> subtitle,
       Value<String> status,
       Value<String> sermonType,
+      Value<String> contentKind,
       Value<String?> primaryBibleReferenceJson,
       Value<String> additionalBibleReferencesJson,
       Value<String> documentJson,
@@ -3689,6 +3742,11 @@ class $$SermonRowsTableFilterComposer
 
   ColumnFilters<String> get sermonType => $composableBuilder(
     column: $table.sermonType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get contentKind => $composableBuilder(
+    column: $table.contentKind,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3937,6 +3995,11 @@ class $$SermonRowsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get contentKind => $composableBuilder(
+    column: $table.contentKind,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get primaryBibleReferenceJson => $composableBuilder(
     column: $table.primaryBibleReferenceJson,
     builder: (column) => ColumnOrderings(column),
@@ -4072,6 +4135,11 @@ class $$SermonRowsTableAnnotationComposer
 
   GeneratedColumn<String> get sermonType => $composableBuilder(
     column: $table.sermonType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get contentKind => $composableBuilder(
+    column: $table.contentKind,
     builder: (column) => column,
   );
 
@@ -4304,6 +4372,7 @@ class $$SermonRowsTableTableManager
                 Value<String> subtitle = const Value.absent(),
                 Value<String> status = const Value.absent(),
                 Value<String> sermonType = const Value.absent(),
+                Value<String> contentKind = const Value.absent(),
                 Value<String?> primaryBibleReferenceJson = const Value.absent(),
                 Value<String> additionalBibleReferencesJson =
                     const Value.absent(),
@@ -4334,6 +4403,7 @@ class $$SermonRowsTableTableManager
                 subtitle: subtitle,
                 status: status,
                 sermonType: sermonType,
+                contentKind: contentKind,
                 primaryBibleReferenceJson: primaryBibleReferenceJson,
                 additionalBibleReferencesJson: additionalBibleReferencesJson,
                 documentJson: documentJson,
@@ -4365,6 +4435,7 @@ class $$SermonRowsTableTableManager
                 Value<String> subtitle = const Value.absent(),
                 required String status,
                 required String sermonType,
+                Value<String> contentKind = const Value.absent(),
                 Value<String?> primaryBibleReferenceJson = const Value.absent(),
                 Value<String> additionalBibleReferencesJson =
                     const Value.absent(),
@@ -4395,6 +4466,7 @@ class $$SermonRowsTableTableManager
                 subtitle: subtitle,
                 status: status,
                 sermonType: sermonType,
+                contentKind: contentKind,
                 primaryBibleReferenceJson: primaryBibleReferenceJson,
                 additionalBibleReferencesJson: additionalBibleReferencesJson,
                 documentJson: documentJson,

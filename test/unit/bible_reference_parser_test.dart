@@ -11,6 +11,9 @@ void main() {
     'Röm 8,28–30',
     '1. Kor 15,1–4',
     '1Kor 15,1-4',
+    '1. Mose 18,16–33',
+    '2. Könige 5,1–14',
+    '1. Thessalonicher 4,13–18',
   ]) {
     test('parses $input', () {
       final reference = parser.parse(input);
@@ -22,5 +25,17 @@ void main() {
   test('rejects unknown books and malformed ranges', () {
     expect(parser.parse('Unbekannt 3,4'), isNull);
     expect(parser.parse('Johannes'), isNull);
+  });
+
+  test('catalog preserves canonical Bible order', () {
+    expect(
+      BibleBookCatalog.orderOf('gen'),
+      lessThan(BibleBookCatalog.orderOf('ps')),
+    );
+    expect(
+      BibleBookCatalog.orderOf('ps'),
+      lessThan(BibleBookCatalog.orderOf('matt')),
+    );
+    expect(BibleBookCatalog.labelFor('1cor'), '1. Korinther');
   });
 }

@@ -4,11 +4,19 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sermonary/app/providers.dart';
 import 'package:sermonary/app/theme/app_theme.dart';
+import 'package:sermonary/features/bible/domain/bible_reference.dart';
 import 'package:sermonary/features/library/domain/sermon.dart';
 
-enum LibraryView { all, drafts, ready, preached, series, trash }
+enum LibraryView {
+  all,
+  bibleBook,
+  series,
+  talks,
+  shortTopics,
+  trash,
+}
 
-enum SermonSort { updated, title, scheduled, bibleBook }
+enum SermonSort { updated, title, scheduled, biblePassage }
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key, this.initialView = LibraryView.all});
@@ -23,103 +31,146 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   SermonSort _sort = SermonSort.updated;
   String _query = '';
   String? _selectedId;
+  String? _selectedBookId;
+  String? _selectedSeriesId;
 
   @override
   Widget build(BuildContext context) {
     ref.watch(bootstrapProvider);
-    final sermons = ref.watch(sermonsProvider);
+    final sermonsAsync = ref.watch(sermonsProvider);
     return Scaffold(
       body: SafeArea(
-        child: Row(
-          children: [
-            _Sidebar(
-              selected: _view,
-              onSelected: (view) => setState(() => _view = view),
-            ),
-            const VerticalDivider(width: 1),
-            Expanded(
-              child: sermons.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => _ErrorState(
-                  message: 'Bibliothek konnte nicht geladen werden.',
-                  onRetry: () => ref.invalidate(sermonsProvider),
-                ),
-                data: (items) {
-                  final filtered = _filterAndSort(items);
-                  final selected = filtered
-                      .where((sermon) => sermon.id == _selectedId)
-                      .firstOrNull;
-                  return LayoutBuilder(
-                    builder: (context, constraints) {
-                      final showDetails =
-                          constraints.maxWidth >= AppSizes.expandedBreakpoint;
-                      return Row(
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: _SermonList(
-                              sermons: filtered,
-                              view: _view,
-                              sort: _sort,
-                              query: _query,
-                              selectedId: _selectedId,
-                              onQueryChanged: (value) =>
-                                  setState(() => _query = value),
-                              onSortChanged: (value) =>
-                                  setState(() => _sort = value),
-                              onSelected: (sermon) {
-                                if (showDetails) {
-                                  setState(() => _selectedId = sermon.id);
-                                } else {
-                                  context.go('/sermons/${sermon.id}/raw');
-                                }
-                              },
-                              onCreate: _createSermon,
-                              onAction: _handleAction,
-                            ),
-                          ),
-                          if (showDetails) ...[
-                            const VerticalDivider(width: 1),
-                            Expanded(
-                              flex: 4,
-                              child: _DetailsPane(
-                                sermon: selected,
-                                onOpen: selected == null
-                                    ? null
-                                    : () => context.go(
-                                        '/sermons/${selected.id}/raw',
-                                      ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      );
-                    },
-                  );
-                },
+        child: sermonsAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => _ErrorState(
+            message: 'Bibliothek konnte nicht geladen werden.',
+            onRetry: () => ref.invalidate(sermonsProvider),
+          ),
+          data: (items) => Row(
+            children: [
+              _Sidebar(
+                sermons: items,
+                selected: _view,
+                selectedBookId: _selectedBookId,
+                selectedSeriesId: _selectedSeriesId,
+                onSelected: _selectView,
+                onBookSelected: _selectBook,
+                onSeriesSelected: _selectSeries,
               ),
-            ),
-          ],
+              const VerticalDivider(width: 1),
+              Expanded(child: _buildLibraryContent(items)),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildLibraryContent(List<Sermon> items) {
+    final filtered = _filterAndSort(items);
+    final selected = filtered
+        .where((sermon) => sermon.id == _selectedId)
+        .firstOrNull;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final showDetails = constraints.maxWidth >= AppSizes.expandedBreakpoint;
+        return Row(
+          children: [
+            Expanded(
+              flex: 5,
+              child: _SermonList(
+                sermons: filtered,
+                title: _viewTitle,
+                view: _view,
+                sort: _sort,
+                query: _query,
+                selectedId: _selectedId,
+                onQueryChanged: (value) => setState(() => _query = value),
+                onSortChanged: (value) => setState(() => _sort = value),
+                onSelected: (sermon) {
+                  if (showDetails) {
+                    setState(() => _selectedId = sermon.id);
+                  } else {
+                    context.go('/sermons/${sermon.id}/raw');
+                  }
+                },
+                onCreate: _createSermon,
+                onAction: _handleAction,
+              ),
+            ),
+            if (showDetails) ...[
+              const VerticalDivider(width: 1),
+              Expanded(
+                flex: 4,
+                child: _DetailsPane(
+                  sermon: selected,
+                  onOpen: selected == null
+                      ? null
+                      : () => context.go('/sermons/${selected.id}/raw'),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  String get _viewTitle => switch (_view) {
+    LibraryView.all => 'Bibliothek',
+    LibraryView.bibleBook =>
+      _selectedBookId == null
+          ? 'Bibelbuch'
+          : BibleBookCatalog.labelFor(_selectedBookId!),
+    LibraryView.series => _selectedSeriesId ?? 'Vortragsreihen',
+    LibraryView.talks => 'Vorträge',
+    LibraryView.shortTopics => 'Kurzthemen',
+    LibraryView.trash => 'Papierkorb',
+  };
+
+  void _selectView(LibraryView view) => setState(() {
+    _view = view;
+    _selectedBookId = null;
+    _selectedSeriesId = null;
+    _selectedId = null;
+    _sort = view == LibraryView.all ? SermonSort.updated : SermonSort.title;
+  });
+
+  void _selectBook(String bookId) => setState(() {
+    _view = LibraryView.bibleBook;
+    _selectedBookId = bookId;
+    _selectedSeriesId = null;
+    _selectedId = null;
+    _sort = SermonSort.biblePassage;
+  });
+
+  void _selectSeries(String seriesId) => setState(() {
+    _view = LibraryView.series;
+    _selectedSeriesId = seriesId;
+    _selectedBookId = null;
+    _selectedId = null;
+    _sort = SermonSort.title;
+  });
+
   List<Sermon> _filterAndSort(List<Sermon> sermons) {
     final query = _query.trim().toLowerCase();
     final filtered = sermons.where((sermon) {
       final matchesView = switch (_view) {
-        LibraryView.all => !sermon.isDeleted,
-        LibraryView.drafts =>
+        LibraryView.all =>
+          !sermon.isDeleted && sermon.contentKind == ContentKind.sermon,
+        LibraryView.bibleBook =>
           !sermon.isDeleted &&
-              {SermonStatus.draft, SermonStatus.inProgress}.contains(
-                sermon.status,
-              ),
-        LibraryView.ready =>
-          !sermon.isDeleted && sermon.status == SermonStatus.ready,
-        LibraryView.preached =>
-          !sermon.isDeleted && sermon.status == SermonStatus.preached,
-        LibraryView.series => !sermon.isDeleted && sermon.seriesId != null,
+              sermon.contentKind == ContentKind.sermon &&
+              sermon.primaryBibleReference?.bookId == _selectedBookId,
+        LibraryView.series =>
+          !sermon.isDeleted &&
+              sermon.seriesId != null &&
+              (_selectedSeriesId == null ||
+                  sermon.seriesId == _selectedSeriesId),
+        LibraryView.talks =>
+          !sermon.isDeleted && sermon.contentKind == ContentKind.talk,
+        LibraryView.shortTopics =>
+          !sermon.isDeleted && sermon.contentKind == ContentKind.shortTopic,
         LibraryView.trash => sermon.isDeleted,
       };
       if (!matchesView) return false;
@@ -137,19 +188,34 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       switch (_sort) {
         SermonSort.updated => (a, b) => b.updatedAt.compareTo(a.updatedAt),
         SermonSort.title => (a, b) => a.title.compareTo(b.title),
-        SermonSort.scheduled => (a, b) => _nullableDate(
+        SermonSort.scheduled => (a, b) => _compareNullableDates(
           a.scheduledAt,
           b.scheduledAt,
         ),
-        SermonSort.bibleBook =>
-          (a, b) => (a.primaryBibleReference?.bookId ?? 'zzz').compareTo(
-            b.primaryBibleReference?.bookId ?? 'zzz',
-          ),
+        SermonSort.biblePassage => _compareBiblePassages,
       },
     );
   }
 
-  int _nullableDate(DateTime? a, DateTime? b) {
+  int _compareBiblePassages(Sermon a, Sermon b) {
+    final left = a.primaryBibleReference;
+    final right = b.primaryBibleReference;
+    if (left == null && right == null) return a.title.compareTo(b.title);
+    if (left == null) return 1;
+    if (right == null) return -1;
+    final bookComparison = BibleBookCatalog.orderOf(
+      left.bookId,
+    ).compareTo(BibleBookCatalog.orderOf(right.bookId));
+    if (bookComparison != 0) return bookComparison;
+    final chapterComparison = left.startChapter.compareTo(right.startChapter);
+    if (chapterComparison != 0) return chapterComparison;
+    final verseComparison = (left.startVerse ?? 0).compareTo(
+      right.startVerse ?? 0,
+    );
+    return verseComparison != 0 ? verseComparison : a.title.compareTo(b.title);
+  }
+
+  int _compareNullableDates(DateTime? a, DateTime? b) {
     if (a == null && b == null) return 0;
     if (a == null) return 1;
     if (b == null) return -1;
@@ -157,7 +223,17 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   }
 
   Future<void> _createSermon() async {
-    final sermon = await ref.read(sermonRepositoryProvider).create();
+    final repository = ref.read(sermonRepositoryProvider);
+    var sermon = await repository.create();
+    final contentKind = switch (_view) {
+      LibraryView.talks => ContentKind.talk,
+      LibraryView.shortTopics => ContentKind.shortTopic,
+      _ => ContentKind.sermon,
+    };
+    if (contentKind != sermon.contentKind) {
+      sermon = sermon.copyWith(contentKind: contentKind);
+      await repository.update(sermon);
+    }
     if (mounted) context.go('/sermons/${sermon.id}/raw');
   }
 
@@ -198,50 +274,167 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 }
 
 class _Sidebar extends StatelessWidget {
-  const _Sidebar({required this.selected, required this.onSelected});
+  const _Sidebar({
+    required this.sermons,
+    required this.selected,
+    required this.selectedBookId,
+    required this.selectedSeriesId,
+    required this.onSelected,
+    required this.onBookSelected,
+    required this.onSeriesSelected,
+  });
+
+  final List<Sermon> sermons;
   final LibraryView selected;
+  final String? selectedBookId;
+  final String? selectedSeriesId;
   final ValueChanged<LibraryView> onSelected;
+  final ValueChanged<String> onBookSelected;
+  final ValueChanged<String> onSeriesSelected;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: 190,
-    color: Theme.of(context).colorScheme.surfaceContainerLow,
-    padding: const EdgeInsets.all(AppSpacing.md),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.sm),
-          child: Text(
-            'Sermonary',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.4,
+  Widget build(BuildContext context) {
+    final visibleSermons = sermons
+        .where(
+          (sermon) =>
+              !sermon.isDeleted &&
+              sermon.contentKind == ContentKind.sermon &&
+              sermon.primaryBibleReference != null,
+        )
+        .toList(growable: false);
+    final bookIds =
+        visibleSermons
+            .map((sermon) => sermon.primaryBibleReference!.bookId)
+            .toSet()
+            .toList()
+          ..sort(
+            (a, b) => BibleBookCatalog.orderOf(
+              a,
+            ).compareTo(BibleBookCatalog.orderOf(b)),
+          );
+    final seriesIds =
+        sermons
+            .where(
+              (sermon) =>
+                  !sermon.isDeleted &&
+                  sermon.seriesId != null &&
+                  sermon.seriesId!.trim().isNotEmpty,
+            )
+            .map((sermon) => sermon.seriesId!)
+            .toSet()
+            .toList()
+          ..sort();
+    return Container(
+      width: 230,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            child: Text(
+              'Sermonary',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        for (final item in const [
-          (LibraryView.all, Icons.library_books_outlined, 'Alle Predigten'),
-          (LibraryView.drafts, Icons.edit_note_outlined, 'Entwürfe'),
-          (LibraryView.ready, Icons.task_alt_outlined, 'Bereit'),
-          (LibraryView.preached, Icons.record_voice_over_outlined, 'Gehalten'),
-          (LibraryView.series, Icons.collections_bookmark_outlined, 'Reihen'),
-        ])
+          const SizedBox(height: AppSpacing.md),
+          const _SectionLabel(label: 'BIBLIOTHEK'),
           _NavItem(
-            icon: item.$2,
-            label: item.$3,
-            selected: selected == item.$1,
-            onTap: () => onSelected(item.$1),
+            icon: Icons.library_books_outlined,
+            label: 'Alle Predigten',
+            selected: selected == LibraryView.all,
+            onTap: () => onSelected(LibraryView.all),
           ),
-        const Spacer(),
-        _NavItem(
-          icon: Icons.delete_outline,
-          label: 'Papierkorb',
-          selected: selected == LibraryView.trash,
-          onTap: () => onSelected(LibraryView.trash),
-        ),
-      ],
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                for (final bookId in bookIds)
+                  _NavItem(
+                    icon: Icons.menu_book_outlined,
+                    label: BibleBookCatalog.labelFor(bookId),
+                    count: visibleSermons
+                        .where(
+                          (sermon) =>
+                              sermon.primaryBibleReference!.bookId == bookId,
+                        )
+                        .length,
+                    selected:
+                        selected == LibraryView.bibleBook &&
+                        selectedBookId == bookId,
+                    onTap: () => onBookSelected(bookId),
+                  ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  child: Divider(),
+                ),
+                const _SectionLabel(label: 'VORTRAGSREIHEN'),
+                _NavItem(
+                  icon: Icons.collections_bookmark_outlined,
+                  label: 'Alle Reihen',
+                  selected:
+                      selected == LibraryView.series &&
+                      selectedSeriesId == null,
+                  onTap: () => onSelected(LibraryView.series),
+                ),
+                for (final seriesId in seriesIds)
+                  _NavItem(
+                    icon: Icons.subdirectory_arrow_right,
+                    label: seriesId,
+                    count: sermons
+                        .where((sermon) => sermon.seriesId == seriesId)
+                        .length,
+                    selected:
+                        selected == LibraryView.series &&
+                        selectedSeriesId == seriesId,
+                    onTap: () => onSeriesSelected(seriesId),
+                  ),
+                const SizedBox(height: AppSpacing.sm),
+                _NavItem(
+                  icon: Icons.co_present_outlined,
+                  label: 'Vorträge',
+                  selected: selected == LibraryView.talks,
+                  onTap: () => onSelected(LibraryView.talks),
+                ),
+                _NavItem(
+                  icon: Icons.lightbulb_outline,
+                  label: 'Kurzthemen',
+                  selected: selected == LibraryView.shortTopics,
+                  onTap: () => onSelected(LibraryView.shortTopics),
+                ),
+              ],
+            ),
+          ),
+          _NavItem(
+            icon: Icons.delete_outline,
+            label: 'Papierkorb',
+            selected: selected == LibraryView.trash,
+            onTap: () => onSelected(LibraryView.trash),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  const _SectionLabel({required this.label});
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(10, 8, 8, 6),
+    child: Text(
+      label,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.8,
+      ),
     ),
   );
 }
@@ -252,11 +445,15 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
+    this.count,
   });
+
   final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final int? count;
+
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.xs),
@@ -269,8 +466,11 @@ class _NavItem extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        leading: Icon(icon, size: 20),
+        leading: Icon(icon, size: 19),
         title: Text(label),
+        trailing: count == null
+            ? null
+            : Text('$count', style: Theme.of(context).textTheme.labelSmall),
         onTap: onTap,
       ),
     ),
@@ -280,6 +480,7 @@ class _NavItem extends StatelessWidget {
 class _SermonList extends StatelessWidget {
   const _SermonList({
     required this.sermons,
+    required this.title,
     required this.view,
     required this.sort,
     required this.query,
@@ -290,7 +491,9 @@ class _SermonList extends StatelessWidget {
     required this.onCreate,
     required this.onAction,
   });
+
   final List<Sermon> sermons;
+  final String title;
   final LibraryView view;
   final SermonSort sort;
   final String query;
@@ -310,7 +513,7 @@ class _SermonList extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                _viewTitle(view),
+                title,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -321,7 +524,13 @@ class _SermonList extends StatelessWidget {
                 key: const Key('new-sermon'),
                 onPressed: onCreate,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text('Neue Predigt'),
+                label: Text(
+                  switch (view) {
+                    LibraryView.talks => 'Neuer Vortrag',
+                    LibraryView.shortTopics => 'Neues Kurzthema',
+                    _ => 'Neue Predigt',
+                  },
+                ),
               ),
           ],
         ),
@@ -335,7 +544,7 @@ class _SermonList extends StatelessWidget {
                 key: const Key('library-search'),
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search),
-                  hintText: 'Predigten durchsuchen',
+                  hintText: 'Archiv durchsuchen',
                 ),
                 onChanged: onQueryChanged,
               ),
@@ -348,20 +557,17 @@ class _SermonList extends StatelessWidget {
               icon: const Icon(Icons.sort),
               itemBuilder: (context) => const [
                 PopupMenuItem(
+                  value: SermonSort.biblePassage,
+                  child: Text('Bibelabschnitt'),
+                ),
+                PopupMenuItem(
                   value: SermonSort.updated,
                   child: Text('Zuletzt bearbeitet'),
                 ),
-                PopupMenuItem(
-                  value: SermonSort.title,
-                  child: Text('Titel'),
-                ),
+                PopupMenuItem(value: SermonSort.title, child: Text('Titel')),
                 PopupMenuItem(
                   value: SermonSort.scheduled,
                   child: Text('Predigtdatum'),
-                ),
-                PopupMenuItem(
-                  value: SermonSort.bibleBook,
-                  child: Text('Bibelbuch'),
                 ),
               ],
             ),
@@ -373,7 +579,7 @@ class _SermonList extends StatelessWidget {
             ? Center(
                 child: Text(
                   query.isEmpty
-                      ? 'Hier sind noch keine Predigten.'
+                      ? 'Hier sind noch keine Einträge.'
                       : 'Keine Treffer für „$query“.',
                 ),
               )
@@ -383,6 +589,7 @@ class _SermonList extends StatelessWidget {
                 separatorBuilder: (context, index) => const SizedBox(height: 8),
                 itemBuilder: (context, index) {
                   final sermon = sermons[index];
+                  final reference = sermon.primaryBibleReference?.displayText;
                   return Card(
                     color: selectedId == sermon.id
                         ? Theme.of(context).colorScheme.secondaryContainer
@@ -393,6 +600,9 @@ class _SermonList extends StatelessWidget {
                         horizontal: 18,
                         vertical: 8,
                       ),
+                      leading: reference == null
+                          ? null
+                          : _ReferenceBadge(reference: reference),
                       title: Text(
                         sermon.title,
                         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -447,32 +657,59 @@ class _SermonList extends StatelessWidget {
       ),
     ],
   );
+}
 
-  String _viewTitle(LibraryView view) => switch (view) {
-    LibraryView.all => 'Bibliothek',
-    LibraryView.drafts => 'Entwürfe',
-    LibraryView.ready => 'Bereit',
-    LibraryView.preached => 'Gehalten',
-    LibraryView.series => 'Predigtreihen',
-    LibraryView.trash => 'Papierkorb',
-  };
+class _ReferenceBadge extends StatelessWidget {
+  const _ReferenceBadge({required this.reference});
+  final String reference;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minWidth: 72, maxWidth: 112),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+    decoration: BoxDecoration(
+      color: Theme.of(context).colorScheme.primaryContainer,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+    ),
+    child: Text(
+      reference,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: Theme.of(context).colorScheme.onPrimaryContainer,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
 }
 
 class _DetailsPane extends StatelessWidget {
   const _DetailsPane({required this.sermon, required this.onOpen});
   final Sermon? sermon;
   final VoidCallback? onOpen;
+
   @override
   Widget build(BuildContext context) {
     final sermon = this.sermon;
     if (sermon == null) {
-      return const Center(child: Text('Predigt auswählen'));
+      return const Center(child: Text('Eintrag auswählen'));
     }
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (sermon.primaryBibleReference case final reference?) ...[
+            Text(
+              reference.displayText,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           Text(sermon.title, style: Theme.of(context).textTheme.headlineMedium),
           if (sermon.subtitle.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -503,7 +740,7 @@ class _DetailsPane extends StatelessWidget {
             width: double.infinity,
             child: FilledButton(
               onPressed: onOpen,
-              child: const Text('Predigt öffnen'),
+              child: const Text('Öffnen'),
             ),
           ),
         ],
@@ -516,6 +753,7 @@ class _MetadataRow extends StatelessWidget {
   const _MetadataRow({required this.label, required this.value});
   final String label;
   final String value;
+
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
@@ -539,6 +777,7 @@ class _MetadataRow extends StatelessWidget {
 class _StatusLabel extends StatelessWidget {
   const _StatusLabel({required this.status});
   final SermonStatus status;
+
   @override
   Widget build(BuildContext context) => Text(
     _statusName(status),
@@ -561,6 +800,7 @@ class _ErrorState extends StatelessWidget {
   const _ErrorState({required this.message, required this.onRetry});
   final String message;
   final VoidCallback onRetry;
+
   @override
   Widget build(BuildContext context) => Center(
     child: Column(

@@ -16,7 +16,7 @@ void main() {
 
   tearDown(() => database.close());
 
-  test('schema version 1 creates all required tables', () async {
+  test('schema version 2 creates all required tables', () async {
     final rows = await database
         .customSelect(
           "SELECT name FROM sqlite_master WHERE type = 'table'",
@@ -35,7 +35,44 @@ void main() {
         'app_settings',
       ]),
     );
-    expect(database.schemaVersion, 1);
+    expect(database.schemaVersion, 2);
+    final sermonColumns = await database
+        .customSelect('PRAGMA table_info(sermons)')
+        .get();
+    expect(
+      sermonColumns.map((row) => row.read<String>('name')),
+      contains('content_kind'),
+    );
+  });
+
+  test('migration from schema 1 adds content kind non-destructively', () async {
+    await database.close();
+    final legacy = AppDatabase(
+      NativeDatabase.memory(
+        setup: (rawDatabase) {
+          rawDatabase
+            ..execute(
+              'CREATE TABLE sermons (id TEXT NOT NULL PRIMARY KEY)',
+            )
+            ..userVersion = 1;
+        },
+      ),
+    );
+    addTearDown(legacy.close);
+
+    final columns = await legacy
+        .customSelect('PRAGMA table_info(sermons)')
+        .get();
+    expect(
+      columns.map((row) => row.read<String>('name')),
+      contains('content_kind'),
+    );
+    expect(
+      columns
+          .singleWhere((row) => row.read<String>('name') == 'content_kind')
+          .read<String>('dflt_value'),
+      "'sermon'",
+    );
   });
 
   test('create, update, trash, restore and version snapshot', () async {
@@ -44,12 +81,14 @@ void main() {
       created.copyWith(
         title: 'Gespeicherte Predigt',
         status: SermonStatus.ready,
+        contentKind: ContentKind.shortTopic,
         document: const SermonDocument(schemaVersion: 1, blocks: []),
       ),
     );
     var loaded = await repository.watchById(created.id).first;
     expect(loaded!.title, 'Gespeicherte Predigt');
     expect(loaded.status, SermonStatus.ready);
+    expect(loaded.contentKind, ContentKind.shortTopic);
 
     await repository.saveVersion(created.id, 'test');
     expect(
