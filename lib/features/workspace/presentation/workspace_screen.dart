@@ -9,6 +9,7 @@ import 'package:sermonary/app/app_config.dart';
 import 'package:sermonary/app/providers.dart';
 import 'package:sermonary/app/theme/app_theme.dart';
 import 'package:sermonary/features/bible/domain/bible_reference.dart';
+import 'package:sermonary/features/library/data/sermon_repository.dart';
 import 'package:sermonary/features/library/domain/sermon.dart';
 import 'package:sermonary/features/sermon_editor/domain/sermon_document.dart';
 import 'package:uuid/uuid.dart';
@@ -39,18 +40,22 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
   bool _splitActive = false;
   bool _focusMode = false;
   bool _saving = false;
+  bool _selectionInitialized = false;
   String? _selectedId;
   String? _navKey;
   String? _loadedSeriesId;
   Sermon? _draft;
   Timer? _saveTimer;
+  late final SermonRepository _repository;
   String? _activeBlockId;
   final Map<String, GlobalKey<_RichBlockFieldState>> _richKeys = {};
 
   @override
   void initState() {
     super.initState();
+    _repository = ref.read(sermonRepositoryProvider);
     _selectedId = widget.sermonId;
+    _selectionInitialized = widget.sermonId != null;
   }
 
   @override
@@ -58,6 +63,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.sermonId != widget.sermonId) {
       _selectedId = widget.sermonId;
+      _selectionInitialized = widget.sermonId != null;
       _draft = null;
       _loadedSeriesId = null;
       _activeBlockId = null;
@@ -73,7 +79,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
     _saveTimer?.cancel();
     final draft = _draft;
     if (draft != null && _saving) {
-      unawaited(ref.read(sermonRepositoryProvider).update(draft));
+      unawaited(_repository.update(draft));
     }
     super.dispose();
   }
@@ -100,8 +106,17 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
     final sermons = allSermons
         .where((sermon) => !sermon.isDeleted)
         .toList(growable: false);
-    final selectedId =
-        _selectedId ?? (sermons.isEmpty ? null : sermons.first.id);
+    if (!_selectionInitialized && sermons.isNotEmpty) {
+      _selectedId = sermons.first.id;
+      _selectionInitialized = true;
+    } else if (_selectedId != null &&
+        !sermons.any((sermon) => sermon.id == _selectedId)) {
+      _selectedId = _entriesForNav(sermons).firstOrNull?.id;
+      _draft = null;
+      _loadedSeriesId = null;
+      _activeBlockId = null;
+    }
+    final selectedId = _selectedId;
     final stored = sermons
         .where((sermon) => sermon.id == selectedId)
         .firstOrNull;
@@ -326,8 +341,8 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
     };
   }
 
-  List<Sermon> _entriesForNav(List<Sermon> sermons) {
-    final key = _navKey;
+  List<Sermon> _entriesForNav(List<Sermon> sermons, {String? navigationKey}) {
+    final key = navigationKey ?? _navKey;
     if (key == null) return sermons;
     if (key.startsWith('book:')) {
       final bookId = key.substring(5);
@@ -389,21 +404,34 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
 
   void _selectNavigation(String key) {
     final sermons = ref.read(sermonsProvider).valueOrNull ?? const <Sermon>[];
-    setState(() => _navKey = key);
     final first = _entriesForNav(
       sermons.where((sermon) => !sermon.isDeleted).toList(),
+      navigationKey: key,
     ).firstOrNull;
-    if (first != null) _selectSermon(first.id);
+    unawaited(_save(reconcileNavigation: false));
+    setState(() {
+      _navKey = key;
+      _selectedId = first?.id;
+      _selectionInitialized = true;
+      if (_draft?.id != first?.id) {
+        _draft = null;
+        _loadedSeriesId = null;
+        _activeBlockId = null;
+      }
+      _saving = false;
+    });
   }
 
   void _selectSermon(String id) {
     if (_selectedId == id) return;
-    unawaited(_save());
+    unawaited(_save(reconcileNavigation: false));
     setState(() {
       _selectedId = id;
+      _selectionInitialized = true;
       _draft = null;
       _loadedSeriesId = null;
       _activeBlockId = null;
+      _saving = false;
     });
   }
 
@@ -574,6 +602,10 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
       ),
     );
     setState(() => _activeBlockId = next.id);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _activeBlockId != next.id) return;
+      _richKeys[next.id]?.currentState?.requestFocus();
+    });
   }
 
   void _deleteBlock(String id) {
@@ -653,7 +685,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
     _saveTimer = Timer(AppConfig.autosaveDelay, _save);
   }
 
-  Future<void> _save() async {
+  Future<void> _save({bool reconcileNavigation = true}) async {
     _saveTimer?.cancel();
     final draft = _draft;
     if (draft == null) return;
@@ -672,10 +704,12 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
       }
     }
     await repository.update(draft);
-    if (mounted) {
+    if (mounted && _draft?.id == draft.id && _selectedId == draft.id) {
       setState(() {
         _loadedSeriesId = draft.seriesId;
-        _navKey = _navKeyFor(draft);
+        if (reconcileNavigation) {
+          _navKey = _navKeyFor(draft);
+        }
         _saving = false;
       });
     }
@@ -847,16 +881,18 @@ class _NavigationColumn extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Text(
-                  '${sermons.length} Einträge',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    fontSize: 10,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+                Expanded(
+                  child: Text(
+                    '${sermons.length} Einträge',
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontSize: 10,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant.withValues(alpha: 0.35),
+                    ),
                   ),
                 ),
-                const Spacer(),
                 _TinyIconButton(
                   icon: isDark ? LucideIcons.sun : LucideIcons.moon,
                   tooltip: isDark ? 'Helle Ansicht' : 'Dunkle Ansicht',
@@ -1006,6 +1042,11 @@ class _WorkspaceToolbar extends StatelessWidget {
         activeBlock is NoteBlock;
     final mayHighlight =
         activeBlock is ParagraphBlock || activeBlock is NoteBlock;
+    final navigationWidth = focusMode
+        ? 0
+        : AppSizes.sidebarWidth + AppSizes.entryListWidth + 2;
+    final showMetrics =
+        MediaQuery.sizeOf(context).width - navigationWidth >= 900;
     return Container(
       height: 48,
       padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -1131,8 +1172,8 @@ class _WorkspaceToolbar extends StatelessWidget {
             selected: false,
             onPressed: onPrint,
           ),
-          const SizedBox(width: 14),
-          if (wordCount > 0)
+          if (wordCount > 0 && showMetrics) ...[
+            const SizedBox(width: 14),
             Text(
               '$wordCount Wörter · $durationLabel',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1142,7 +1183,9 @@ class _WorkspaceToolbar extends StatelessWidget {
                 ).colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
               ),
             ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
+          ] else
+            const SizedBox(width: 14),
           Text(
             saving ? 'Speichert …' : 'Gespeichert',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -2095,6 +2138,14 @@ class _RichBlockFieldState extends State<_RichBlockField> {
         : [..._controller.marks, mark];
     setState(() => _controller.marks = next);
     widget.onChanged(_controller.text, next);
+  }
+
+  void requestFocus() {
+    _focusNode.requestFocus();
+    _controller.selection = TextSelection.collapsed(
+      offset: _controller.text.length,
+    );
+    widget.onFocus();
   }
 
   @override
