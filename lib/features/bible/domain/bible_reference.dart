@@ -248,7 +248,7 @@ class BibleReferenceParser {
         .replaceAll('–', '-')
         .replaceAll(RegExp(r'\s+'), ' ');
     final match = RegExp(
-      r'^(.+?)\s*(\d+)(?:\s*,\s*(\d+))?(?:\s*-\s*(?:(\d+)\s*,\s*)?(\d+))?$',
+      r'^(.+?)\s*(\d+)(?:\s*[:,]\s*(\d+))?(?:\s*-\s*(?:(\d+)\s*[:,]\s*)?(\d+))?$',
       caseSensitive: false,
     ).firstMatch(normalized);
     if (match == null) return null;

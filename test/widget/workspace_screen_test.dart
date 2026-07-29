@@ -211,9 +211,13 @@ void main() {
     await tester.tap(find.byTooltip('Bibelstelle einfügen'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('bible-reference-dialog')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('insert-bible-reference')));
+    await tester.pump();
+    expect(find.text('Bitte Kapitel oder Verse eingeben.'), findsOneWidget);
+    expect(find.byKey(const Key('bible-reference-dialog')), findsOneWidget);
     await tester.enterText(
       find.byKey(const Key('bible-passage-field')),
-      '3,17',
+      '3:17',
     );
     await tester.tap(find.byKey(const Key('insert-bible-reference')));
     await tester.pump(const Duration(milliseconds: 700));
@@ -225,7 +229,7 @@ void main() {
     );
     expect(
       saved.document.blocks.whereType<QuoteBlock>().map((block) => block.text),
-      contains('— Johannes 3,17'),
+      contains('— Johannes 3:17'),
     );
 
     await tester.tap(find.byTooltip('Notizen'));

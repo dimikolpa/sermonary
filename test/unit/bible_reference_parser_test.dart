@@ -12,6 +12,8 @@ void main() {
     '1. Kor 15,1–4',
     '1Kor 15,1-4',
     '1. Mose 18,16–33',
+    '1. Mose 18:16–33',
+    'Johannes 3:16-4:2',
     '2. Könige 5,1–14',
     '1. Thessalonicher 4,13–18',
   ]) {

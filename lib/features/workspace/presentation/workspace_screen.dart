@@ -2481,6 +2481,7 @@ class _BibleReferenceDialog extends StatefulWidget {
 class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
   late String _bookId = widget.initialBookId;
   final TextEditingController _passageController = TextEditingController();
+  String? _errorText;
 
   @override
   void dispose() {
@@ -2490,7 +2491,17 @@ class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
 
   void _submit() {
     final passage = _passageController.text.trim();
-    if (passage.isEmpty) return;
+    final parsed = BibleReferenceParser().parse(
+      '${BibleBookCatalog.labelFor(_bookId)} $passage',
+    );
+    if (parsed == null) {
+      setState(() {
+        _errorText = passage.isEmpty
+            ? 'Bitte Kapitel oder Verse eingeben.'
+            : 'Bitte z. B. 3,16 oder 18:16–33 eingeben.';
+      });
+      return;
+    }
     Navigator.of(context).pop(
       _BibleReferenceRequest(bookId: _bookId, passage: passage),
     );
@@ -2569,8 +2580,11 @@ class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
                 horizontal: 12,
                 vertical: 9,
               ),
-            ),
+            ).copyWith(errorText: _errorText),
             textInputAction: TextInputAction.done,
+            onChanged: (_) {
+              if (_errorText != null) setState(() => _errorText = null);
+            },
             onSubmitted: (_) => _submit(),
           ),
           const SizedBox(height: 12),
