@@ -153,6 +153,117 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(milliseconds: 1));
   });
+
+  testWidgets('Bible references become script quotes and note bullets', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final database = AppDatabase(NativeDatabase.memory());
+    addTearDown(database.close);
+    final repository = DriftSermonRepository(database);
+    final now = DateTime.now().toUtc();
+    final created = await repository.create();
+    final sermon = created.copyWith(
+      title: 'Bibelstellentest',
+      contentKind: ContentKind.sermon,
+      primaryBibleReference: BibleReferenceParser().parse('Johannes 3,16'),
+      document: SermonDocument(
+        schemaVersion: 1,
+        blocks: [
+          ParagraphBlock(
+            id: 'script-paragraph',
+            text: 'Skriptabsatz',
+            semanticRole: ParagraphRole.normal,
+            createdAt: now,
+            updatedAt: now,
+          ),
+          NoteBlock(
+            id: 'existing-note',
+            text: 'Bestehende Notiz',
+            visibility: NoteVisibility.editorOnly,
+            depth: 1,
+            createdAt: now,
+            updatedAt: now,
+          ),
+        ],
+      ),
+    );
+    await repository.update(sermon);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          databaseProvider.overrideWithValue(database),
+          bootstrapProvider.overrideWith((ref) async {}),
+        ],
+        child: MaterialApp(
+          theme: buildTheme(Brightness.light),
+          home: SermonWorkspaceScreen(
+            sermonId: sermon.id,
+            initialView: WorkspaceView.script,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Bibelstelle einfügen'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('bible-reference-dialog')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('bible-passage-field')),
+      '3,17',
+    );
+    await tester.tap(find.byKey(const Key('insert-bible-reference')));
+    await tester.pump(const Duration(milliseconds: 700));
+
+    var saved = sermonFromRow(
+      await (database.select(
+        database.sermonRows,
+      )..where((row) => row.id.equals(sermon.id))).getSingle(),
+    );
+    expect(
+      saved.document.blocks.whereType<QuoteBlock>().map((block) => block.text),
+      contains('— Johannes 3,17'),
+    );
+
+    await tester.tap(find.byTooltip('Notizen'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Notizen'));
+    await tester.pumpAndSettle();
+    final existingNote = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField && widget.controller?.text == 'Bestehende Notiz',
+    );
+    expect(existingNote, findsOneWidget);
+    await tester.tap(existingNote);
+    await tester.pump();
+
+    await tester.tap(find.byTooltip('Bibelstelle einfügen'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('bible-passage-field')),
+      '3,18',
+    );
+    await tester.tap(find.byKey(const Key('insert-bible-reference')));
+    await tester.pump(const Duration(milliseconds: 700));
+
+    saved = sermonFromRow(
+      await (database.select(
+        database.sermonRows,
+      )..where((row) => row.id.equals(sermon.id))).getSingle(),
+    );
+    final notes = saved.document.blocks.whereType<NoteBlock>().toList();
+    expect(notes.map((block) => block.text), contains('Johannes 3,18'));
+    final insertedNote = notes.singleWhere(
+      (block) => block.text == 'Johannes 3,18',
+    );
+    expect(insertedNote.depth, 1);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(milliseconds: 1));
+  });
 }
 
 class _DelayedSermonRepository implements SermonRepository {

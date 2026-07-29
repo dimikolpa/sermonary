@@ -216,6 +216,7 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
                               onSelectView: _selectView,
                               onChangeBlockType: _changeActiveBlockType,
                               onFormat: _applyInlineFormat,
+                              onInsertBibleReference: _showBibleReferencePicker,
                               onLive: () => context.go(
                                 '/sermons/${selected.id}/live',
                               ),
@@ -680,6 +681,76 @@ class _SermonWorkspaceScreenState extends ConsumerState<SermonWorkspaceScreen> {
     _richKeys[id]?.currentState?.applyFormat(format);
   }
 
+  Future<void> _showBibleReferencePicker() async {
+    final draft = _draft;
+    if (draft == null || _view == WorkspaceView.outline) return;
+    final request = await showGeneralDialog<_BibleReferenceRequest>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Bibelstelle schließen',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 150),
+      pageBuilder: (context, animation, secondaryAnimation) => Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 58),
+          child: _BibleReferenceDialog(
+            initialBookId:
+                draft.primaryBibleReference?.bookId ??
+                BibleBookCatalog.all.first.id,
+            asNote: _view == WorkspaceView.notes && !_splitActive,
+          ),
+        ),
+      ),
+      transitionBuilder: (context, animation, secondaryAnimation, child) =>
+          FadeTransition(
+            opacity: CurvedAnimation(
+              parent: animation,
+              curve: Curves.easeOut,
+            ),
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1).animate(animation),
+              alignment: Alignment.topCenter,
+              child: child,
+            ),
+          ),
+    );
+    if (request == null || !mounted) return;
+    final parsed = BibleReferenceParser().parse(
+      '${BibleBookCatalog.labelFor(request.bookId)} ${request.passage}',
+    );
+    if (parsed == null) return;
+    final now = DateTime.now().toUtc();
+    final active = _activeBlock(draft.document);
+    final insertAfterId =
+        active?.id ?? draft.document.blocks.lastOrNull?.id ?? '';
+    if (_view == WorkspaceView.notes && !_splitActive) {
+      _insertBlockAfter(
+        insertAfterId,
+        NoteBlock(
+          id: const Uuid().v4(),
+          text: parsed.displayText,
+          visibility: NoteVisibility.editorOnly,
+          depth: active is NoteBlock ? active.depth : 0,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    } else {
+      _insertBlockAfter(
+        insertAfterId,
+        QuoteBlock(
+          id: const Uuid().v4(),
+          text: '— ${parsed.displayText}',
+          author: '',
+          source: '',
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+    }
+  }
+
   void _scheduleSave() {
     _saveTimer?.cancel();
     _saveTimer = Timer(AppConfig.autosaveDelay, _save);
@@ -1009,6 +1080,7 @@ class _WorkspaceToolbar extends StatelessWidget {
     required this.onSelectView,
     required this.onChangeBlockType,
     required this.onFormat,
+    required this.onInsertBibleReference,
     required this.onLive,
     required this.onPrint,
   });
@@ -1024,6 +1096,7 @@ class _WorkspaceToolbar extends StatelessWidget {
   final ValueChanged<WorkspaceView> onSelectView;
   final ValueChanged<String> onChangeBlockType;
   final ValueChanged<_InlineFormat> onFormat;
+  final VoidCallback onInsertBibleReference;
   final VoidCallback onLive;
   final VoidCallback onPrint;
 
@@ -1053,148 +1126,172 @@ class _WorkspaceToolbar extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Theme.of(
-              context,
-            ).colorScheme.outlineVariant.withValues(alpha: 0.5),
+            color: Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
       ),
-      child: Row(
+      child: Stack(
         children: [
-          _TinyIconButton(
-            icon: focusMode ? LucideIcons.minimize2 : LucideIcons.maximize2,
-            tooltip: focusMode ? 'Navigation zeigen' : 'Fokusmodus',
-            onPressed: onToggleFocus,
-          ),
-          if (activeBlock != null && view != WorkspaceView.outline) ...[
-            const SizedBox(width: 8),
-            PopupMenuButton<String>(
-              tooltip: 'Blocktyp',
-              onSelected: onChangeBlockType,
-              itemBuilder: (context) {
-                final notes = view == WorkspaceView.notes;
-                return [
-                  const PopupMenuItem(
-                    value: 'h1',
-                    child: Text('Überschrift 1'),
-                  ),
-                  const PopupMenuItem(
-                    value: 'h2',
-                    child: Text('Überschrift 2'),
-                  ),
-                  if (notes) ...[
-                    const PopupMenuItem(value: 'li', child: Text('Stichpunkt')),
-                    const PopupMenuItem(
-                      value: 'li2',
-                      child: Text('Unterpunkt'),
-                    ),
-                  ] else ...[
-                    const PopupMenuItem(value: 'p', child: Text('Absatz')),
-                    const PopupMenuItem(value: 'quote', child: Text('Zitat')),
-                  ],
-                ];
-              },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-                child: Row(
-                  children: [
-                    Text(
-                      _blockLabel(activeBlock!),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 11.5,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurfaceVariant.withValues(alpha: 0.55),
+          Row(
+            children: [
+              _TinyIconButton(
+                icon: focusMode ? LucideIcons.minimize2 : LucideIcons.maximize2,
+                tooltip: focusMode ? 'Navigation zeigen' : 'Fokusmodus',
+                onPressed: onToggleFocus,
+              ),
+              if (activeBlock != null && view != WorkspaceView.outline) ...[
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  tooltip: 'Blocktyp',
+                  onSelected: onChangeBlockType,
+                  itemBuilder: (context) {
+                    final notes = view == WorkspaceView.notes;
+                    return [
+                      const PopupMenuItem(
+                        value: 'h1',
+                        child: Text('Überschrift 1'),
                       ),
+                      const PopupMenuItem(
+                        value: 'h2',
+                        child: Text('Überschrift 2'),
+                      ),
+                      if (notes) ...[
+                        const PopupMenuItem(
+                          value: 'li',
+                          child: Text('Stichpunkt'),
+                        ),
+                        const PopupMenuItem(
+                          value: 'li2',
+                          child: Text('Unterpunkt'),
+                        ),
+                      ] else ...[
+                        const PopupMenuItem(value: 'p', child: Text('Absatz')),
+                        const PopupMenuItem(
+                          value: 'quote',
+                          child: Text('Zitat'),
+                        ),
+                      ],
+                    ];
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 5,
                     ),
-                    const SizedBox(width: 4),
-                    const Icon(LucideIcons.chevronDown, size: 10),
-                  ],
+                    child: Row(
+                      children: [
+                        Text(
+                          _blockLabel(activeBlock!),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontSize: 11.5,
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant.withValues(
+                                      alpha: 0.55,
+                                    ),
+                              ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(LucideIcons.chevronDown, size: 10),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              if (rich) ...[
+                const SizedBox(width: 3),
+                _FormatButton(
+                  label: 'B',
+                  tooltip: 'Fett',
+                  onPressed: () => onFormat(_InlineFormat.bold),
+                ),
+                _FormatButton(
+                  label: 'I',
+                  tooltip: 'Kursiv',
+                  italic: true,
+                  onPressed: () => onFormat(_InlineFormat.italic),
+                ),
+                if (mayHighlight)
+                  _TinyIconButton(
+                    icon: LucideIcons.highlighter,
+                    tooltip: 'Markieren',
+                    onPressed: () => onFormat(_InlineFormat.highlight),
+                    size: 11,
+                  ),
+              ],
+              const Spacer(),
+              _ViewButton(
+                icon: LucideIcons.layoutList,
+                tooltip: 'Outline',
+                selected: _viewActive(WorkspaceView.outline),
+                onPressed: () => onSelectView(WorkspaceView.outline),
+              ),
+              _ViewButton(
+                icon: LucideIcons.notebookPen,
+                tooltip: 'Notizen',
+                selected: _viewActive(WorkspaceView.notes),
+                onPressed: () => onSelectView(WorkspaceView.notes),
+              ),
+              _ViewButton(
+                icon: LucideIcons.scrollText,
+                tooltip: 'Skript',
+                selected: _viewActive(WorkspaceView.script),
+                onPressed: () => onSelectView(WorkspaceView.script),
+              ),
+              Container(
+                width: 1,
+                height: 14,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
+              _ViewButton(
+                icon: LucideIcons.monitor,
+                tooltip: 'Live-Ansicht',
+                selected: false,
+                onPressed: onLive,
+              ),
+              _ViewButton(
+                icon: LucideIcons.printer,
+                tooltip: 'Print-Ansicht',
+                selected: false,
+                onPressed: onPrint,
+              ),
+              if (wordCount > 0 && showMetrics) ...[
+                const SizedBox(width: 14),
+                Text(
+                  '$wordCount Wörter · $durationLabel',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontSize: 11.5,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ] else
+                const SizedBox(width: 14),
+              Text(
+                saving ? 'Speichert …' : 'Gespeichert',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontSize: 11.5,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                 ),
               ),
-            ),
-          ],
-          if (rich) ...[
-            const SizedBox(width: 3),
-            _FormatButton(
-              label: 'B',
-              tooltip: 'Fett',
-              onPressed: () => onFormat(_InlineFormat.bold),
-            ),
-            _FormatButton(
-              label: 'I',
-              tooltip: 'Kursiv',
-              italic: true,
-              onPressed: () => onFormat(_InlineFormat.italic),
-            ),
-            if (mayHighlight)
-              _TinyIconButton(
-                icon: LucideIcons.highlighter,
-                tooltip: 'Markieren',
-                onPressed: () => onFormat(_InlineFormat.highlight),
-                size: 11,
-              ),
-          ],
-          const Spacer(),
-          _ViewButton(
-            icon: LucideIcons.layoutList,
-            tooltip: 'Outline',
-            selected: _viewActive(WorkspaceView.outline),
-            onPressed: () => onSelectView(WorkspaceView.outline),
+            ],
           ),
-          _ViewButton(
-            icon: LucideIcons.notebookPen,
-            tooltip: 'Notizen',
-            selected: _viewActive(WorkspaceView.notes),
-            onPressed: () => onSelectView(WorkspaceView.notes),
-          ),
-          _ViewButton(
-            icon: LucideIcons.scrollText,
-            tooltip: 'Skript',
-            selected: _viewActive(WorkspaceView.script),
-            onPressed: () => onSelectView(WorkspaceView.script),
-          ),
-          Container(
-            width: 1,
-            height: 14,
-            margin: const EdgeInsets.symmetric(horizontal: 4),
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-          _ViewButton(
-            icon: LucideIcons.monitor,
-            tooltip: 'Live-Ansicht',
-            selected: false,
-            onPressed: onLive,
-          ),
-          _ViewButton(
-            icon: LucideIcons.printer,
-            tooltip: 'Print-Ansicht',
-            selected: false,
-            onPressed: onPrint,
-          ),
-          if (wordCount > 0 && showMetrics) ...[
-            const SizedBox(width: 14),
-            Text(
-              '$wordCount Wörter · $durationLabel',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontSize: 11.5,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant.withValues(alpha: 0.38),
+          if (view != WorkspaceView.outline)
+            Align(
+              child: _ViewButton(
+                icon: LucideIcons.bookOpen,
+                tooltip: 'Bibelstelle einfügen',
+                selected: false,
+                onPressed: onInsertBibleReference,
               ),
             ),
-            const SizedBox(width: 16),
-          ] else
-            const SizedBox(width: 14),
-          Text(
-            saving ? 'Speichert …' : 'Gespeichert',
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontSize: 11.5,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
-            ),
-          ),
         ],
       ),
     );
@@ -1294,7 +1391,7 @@ class _OutlineView extends StatelessWidget {
                               sermon.primaryBibleReference!,
                             ),
                       hintText: '18:16–33',
-                      style: _headingStyle(context).copyWith(
+                      style: _outlineReferenceStyle(context).copyWith(
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurface.withValues(alpha: 0.42),
@@ -1384,9 +1481,7 @@ class _OutlineView extends StatelessWidget {
             ),
             const SizedBox(height: 38),
             Divider(
-              color: Theme.of(
-                context,
-              ).colorScheme.outlineVariant.withValues(alpha: 0.45),
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
             const SizedBox(height: 26),
             _BareTextField(
@@ -1526,9 +1621,7 @@ class _ScriptView extends StatelessWidget {
               ),
               const SizedBox(height: 38),
               Divider(
-                color: Theme.of(
-                  context,
-                ).colorScheme.outlineVariant.withValues(alpha: 0.55),
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
               const SizedBox(height: 38),
               for (var index = 0; index < blocks.length; index++)
@@ -1606,9 +1699,7 @@ class _NotesView extends StatelessWidget {
               Text(sermon.title, style: _titleStyle(context)),
               const SizedBox(height: 38),
               Divider(
-                color: Theme.of(
-                  context,
-                ).colorScheme.outlineVariant.withValues(alpha: 0.55),
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
               const SizedBox(height: 38),
               for (var index = 0; index < blocks.length; index++)
@@ -1685,9 +1776,7 @@ class _SplitView extends StatelessWidget {
               Text(sermon.title, style: _titleStyle(context)),
               const SizedBox(height: 38),
               Divider(
-                color: Theme.of(
-                  context,
-                ).colorScheme.outlineVariant.withValues(alpha: 0.55),
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
               const SizedBox(height: 12),
               const Row(
@@ -1759,9 +1848,7 @@ class _SplitView extends StatelessWidget {
                       ),
                       VerticalDivider(
                         width: 1,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.outlineVariant.withValues(alpha: 0.35),
+                        color: Theme.of(context).colorScheme.outlineVariant,
                       ),
                       Expanded(
                         child: Padding(
@@ -2368,6 +2455,156 @@ class _ScriptMeta extends StatelessWidget {
   }
 }
 
+class _BibleReferenceRequest {
+  const _BibleReferenceRequest({
+    required this.bookId,
+    required this.passage,
+  });
+
+  final String bookId;
+  final String passage;
+}
+
+class _BibleReferenceDialog extends StatefulWidget {
+  const _BibleReferenceDialog({
+    required this.initialBookId,
+    required this.asNote,
+  });
+
+  final String initialBookId;
+  final bool asNote;
+
+  @override
+  State<_BibleReferenceDialog> createState() => _BibleReferenceDialogState();
+}
+
+class _BibleReferenceDialogState extends State<_BibleReferenceDialog> {
+  late String _bookId = widget.initialBookId;
+  final TextEditingController _passageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _passageController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final passage = _passageController.text.trim();
+    if (passage.isEmpty) return;
+    Navigator.of(context).pop(
+      _BibleReferenceRequest(bookId: _bookId, passage: passage),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Theme.of(context).colorScheme.surfaceContainerLow,
+    elevation: 5,
+    shadowColor: Colors.black.withValues(alpha: 0.12),
+    borderRadius: BorderRadius.circular(8),
+    child: Container(
+      key: const Key('bible-reference-dialog'),
+      width: 288,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'BIBELSTELLE EINFÜGEN',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontSize: 9,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.1,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.42),
+            ),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            key: const Key('bible-book-field'),
+            initialValue: _bookId,
+            isExpanded: true,
+            style: const TextStyle(
+              fontFamily: AppTypography.ui,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 9,
+              ),
+            ),
+            items: [
+              for (final book in BibleBookCatalog.all)
+                DropdownMenuItem(value: book.id, child: Text(book.label)),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _bookId = value);
+            },
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            key: const Key('bible-passage-field'),
+            controller: _passageController,
+            autofocus: true,
+            style: const TextStyle(
+              fontFamily: AppTypography.ui,
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+            ),
+            decoration: const InputDecoration(
+              hintText: 'Vers, z. B. 3,16 oder 18:16–33',
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 9,
+              ),
+            ),
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 36,
+            child: FilledButton(
+              key: const Key('insert-bible-reference'),
+              onPressed: _submit,
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainer,
+                foregroundColor: Theme.of(context).colorScheme.onSurface,
+                padding: EdgeInsets.zero,
+                textStyle: const TextStyle(
+                  fontFamily: AppTypography.ui,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              child: Text(
+                widget.asNote
+                    ? 'Als Stichpunkt einfügen'
+                    : 'Als Zitat einfügen',
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _BookDropdown extends StatelessWidget {
   const _BookDropdown({required this.reference, required this.onChanged});
 
@@ -2378,13 +2615,19 @@ class _BookDropdown extends StatelessWidget {
   Widget build(BuildContext context) => DropdownButtonHideUnderline(
     child: DropdownButton<String>(
       value: reference?.bookId,
-      hint: Text('Buch …', style: _headingStyle(context)),
-      icon: const Icon(LucideIcons.chevronDown, size: 14),
+      hint: Text('Buch …', style: _outlineReferenceStyle(context)),
+      icon: const Icon(LucideIcons.chevronDown, size: 12),
       isExpanded: true,
-      style: _headingStyle(context),
+      style: _outlineReferenceStyle(context),
       items: [
         for (final book in BibleBookCatalog.all)
-          DropdownMenuItem(value: book.id, child: Text(book.label)),
+          DropdownMenuItem(
+            value: book.id,
+            child: Text(
+              book.label,
+              style: _outlineReferenceStyle(context),
+            ),
+          ),
       ],
       onChanged: (bookId) {
         if (bookId == null) return;
@@ -2951,6 +3194,16 @@ TextStyle _subheadingStyle(BuildContext context) =>
       height: 1.38,
       letterSpacing: -0.2,
       color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.76),
+    );
+
+TextStyle _outlineReferenceStyle(BuildContext context) =>
+    Theme.of(context).textTheme.bodyMedium!.copyWith(
+      fontFamily: AppTypography.ui,
+      fontSize: 15,
+      fontWeight: FontWeight.w400,
+      height: 1.35,
+      letterSpacing: 0,
+      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.78),
     );
 
 TextStyle _bodyStyle(BuildContext context) =>
