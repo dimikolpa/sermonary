@@ -695,8 +695,7 @@ class _ReferenceBadge extends StatelessWidget {
     ),
     child: Text(
       reference,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
+      softWrap: true,
       textAlign: TextAlign.center,
       style: Theme.of(context).textTheme.labelMedium?.copyWith(
         color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -800,7 +799,7 @@ class _MetadataRow extends StatelessWidget {
             ),
           ),
         ),
-        Text(value),
+        Expanded(child: Text(value, softWrap: true)),
       ],
     ),
   );

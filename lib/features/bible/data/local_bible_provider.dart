@@ -156,16 +156,23 @@ class LocalBibleProvider implements BibleProvider {
     await prepare();
     final startVerse = reference.startVerse ?? 1;
     final endVerse = reference.endVerse ?? startVerse;
+    final endChapter = reference.endChapter ?? reference.startChapter;
     final query = database.select(database.bibleVerses)
       ..where(
         (row) =>
             row.translationId.equals(requestedTranslationId) &
             row.bookId.equals(reference.bookId) &
-            row.chapter.equals(reference.startChapter) &
-            row.verse.isBiggerOrEqualValue(startVerse) &
-            row.verse.isSmallerOrEqualValue(endVerse),
+            ((row.chapter.equals(reference.startChapter) &
+                    row.verse.isBiggerOrEqualValue(startVerse)) |
+                row.chapter.isBiggerThanValue(reference.startChapter)) &
+            ((row.chapter.equals(endChapter) &
+                    row.verse.isSmallerOrEqualValue(endVerse)) |
+                row.chapter.isSmallerThanValue(endChapter)),
       )
-      ..orderBy([(row) => OrderingTerm.asc(row.verse)]);
+      ..orderBy([
+        (row) => OrderingTerm.asc(row.chapter),
+        (row) => OrderingTerm.asc(row.verse),
+      ]);
     final verses = await query.get();
     if (verses.isEmpty) return null;
     final translation = await (database.select(

@@ -17,6 +17,9 @@ class BibleReference {
   final int? endVerse;
   final String displayText;
 
+  bool get hasCompleteRange =>
+      startVerse != null && endChapter != null && endVerse != null;
+
   Map<String, Object?> toJson() => {
     'bookId': bookId,
     'startChapter': startChapter,
@@ -34,6 +37,33 @@ class BibleReference {
     endVerse: json['endVerse'] as int?,
     displayText: json['displayText']! as String,
   );
+}
+
+String formatBibleReference(
+  BibleReference reference, {
+  bool includeBook = true,
+}) {
+  final startVerse = reference.startVerse;
+  final endVerse = reference.endVerse;
+  if (startVerse == null || endVerse == null) {
+    return includeBook
+        ? reference.displayText
+        : _referenceTextWithoutBook(reference);
+  }
+  final endChapter = reference.endChapter ?? reference.startChapter;
+  final range = endChapter == reference.startChapter
+      ? '${reference.startChapter},$startVerse-$endVerse'
+      : '${reference.startChapter},$startVerse-$endChapter,$endVerse';
+  return includeBook
+      ? '${BibleBookCatalog.labelFor(reference.bookId)} $range'
+      : range;
+}
+
+String _referenceTextWithoutBook(BibleReference reference) {
+  final book = BibleBookCatalog.labelFor(reference.bookId);
+  return reference.displayText.startsWith(book)
+      ? reference.displayText.substring(book.length).trim()
+      : reference.displayText;
 }
 
 class BibleBookInfo {
@@ -242,9 +272,55 @@ abstract final class BibleBookCatalog {
 }
 
 class BibleReferenceParser {
+  BibleReference? parsePassage(String input) {
+    final normalized = input
+        .trim()
+        .replaceAll('â', '-')
+        .replaceAll('â', '-')
+        .replaceAll('–', '-')
+        .replaceAll('—', '-')
+        .replaceAll(RegExp(r'\s+'), ' ');
+    final match = RegExp(
+      r'^(.+?)\s+(\d+)\s*[:,]\s*(\d+)(?:\s*-\s*(?:(\d+)\s*[:,]\s*)?(\d+))?$',
+      caseSensitive: false,
+    ).firstMatch(normalized);
+    if (match == null) return null;
+    final book = _bookFor(match.group(1)!);
+    if (book == null) return null;
+    final startChapter = int.parse(match.group(2)!);
+    final startVerse = int.parse(match.group(3)!);
+    final endChapter = int.tryParse(match.group(4) ?? '') ?? startChapter;
+    final endVerse = int.tryParse(match.group(5) ?? '') ?? startVerse;
+    if (startChapter < 1 ||
+        startVerse < 1 ||
+        endChapter < startChapter ||
+        endVerse < 1 ||
+        (endChapter == startChapter && endVerse < startVerse)) {
+      return null;
+    }
+    final reference = BibleReference(
+      bookId: book.id,
+      startChapter: startChapter,
+      startVerse: startVerse,
+      endChapter: endChapter,
+      endVerse: endVerse,
+      displayText: '',
+    );
+    return BibleReference(
+      bookId: reference.bookId,
+      startChapter: reference.startChapter,
+      startVerse: reference.startVerse,
+      endChapter: reference.endChapter,
+      endVerse: reference.endVerse,
+      displayText: formatBibleReference(reference),
+    );
+  }
+
   BibleReference? parse(String input) {
     final normalized = input
         .trim()
+        .replaceAll('â', '-')
+        .replaceAll('â', '-')
         .replaceAll('–', '-')
         .replaceAll(RegExp(r'\s+'), ' ');
     final match = RegExp(
@@ -252,12 +328,7 @@ class BibleReferenceParser {
       caseSensitive: false,
     ).firstMatch(normalized);
     if (match == null) return null;
-    final rawBook = _normalizeBookName(match.group(1)!);
-    final book = BibleBookCatalog.all.firstWhereOrNull(
-      (candidate) => candidate.aliases.any(
-        (alias) => _normalizeBookName(alias) == rawBook,
-      ),
-    );
+    final book = _bookFor(match.group(1)!);
     if (book == null) return null;
     final startChapter = int.parse(match.group(2)!);
     final startVerse = int.tryParse(match.group(3) ?? '');
@@ -270,6 +341,15 @@ class BibleReferenceParser {
       endChapter: explicitEndChapter,
       endVerse: endValue,
       displayText: input.trim().replaceAll('-', '–'),
+    );
+  }
+
+  BibleBookInfo? _bookFor(String value) {
+    final rawBook = _normalizeBookName(value);
+    return BibleBookCatalog.all.firstWhereOrNull(
+      (candidate) => candidate.aliases.any(
+        (alias) => _normalizeBookName(alias) == rawBook,
+      ),
     );
   }
 

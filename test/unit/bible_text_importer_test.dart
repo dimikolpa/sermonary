@@ -42,6 +42,24 @@ void main() {
     expect(result?.verseRange, '16-17');
   });
 
+  test('recognizes verse numbers followed by a colon', () {
+    final result = importer.import(
+      '20: Er aber sprach zu ihnen. 21: Und sie gingen weiter.',
+    );
+
+    expect(result?.text, 'Er aber sprach zu ihnen. Und sie gingen weiter.');
+    expect(result?.verseRange, '20-21');
+  });
+
+  test('removes numeric footnotes but preserves textual square brackets', () {
+    final result = importer.import(
+      '20: Jesus[12] sprach [oder: antwortete] zu ihnen.',
+    );
+
+    expect(result?.text, 'Jesus sprach [oder: antwortete] zu ihnen.');
+    expect(result?.verseRange, '20');
+  });
+
   test('requires detectable verse numbers', () {
     expect(importer.import('Text ohne Versnummer'), isNull);
     expect(importer.import(''), isNull);

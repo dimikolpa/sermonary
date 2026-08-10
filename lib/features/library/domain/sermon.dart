@@ -40,6 +40,7 @@ class Sermon {
     required this.document,
     this.primaryBibleReference,
     this.seriesId,
+    this.versionRootId,
     this.seriesPosition,
     this.audience,
     this.location,
@@ -48,6 +49,7 @@ class Sermon {
     this.actualDurationMinutes,
     this.deletedAt,
     this.contentKind = ContentKind.sermon,
+    this.backgroundImageId,
   });
 
   final String id;
@@ -57,9 +59,13 @@ class Sermon {
   final SermonStatus status;
   final SermonType sermonType;
   final ContentKind contentKind;
+  final String? backgroundImageId;
   final BibleReference? primaryBibleReference;
   final List<BibleReference> additionalBibleReferences;
   final String? seriesId;
+
+  /// The original sermon this version belongs to. Originals keep this null.
+  final String? versionRootId;
   final int? seriesPosition;
   final List<String> topics;
   final List<String> tags;
@@ -84,10 +90,15 @@ class Sermon {
     SermonStatus? status,
     SermonType? sermonType,
     ContentKind? contentKind,
+    String? backgroundImageId,
+    bool clearBackgroundImageId = false,
     BibleReference? primaryBibleReference,
     bool clearPrimaryBibleReference = false,
     String? seriesId,
+    String? versionRootId,
+    bool clearVersionRootId = false,
     int? seriesPosition,
+    bool clearSeriesPosition = false,
     List<String>? topics,
     List<String>? tags,
     String? audience,
@@ -109,12 +120,20 @@ class Sermon {
     status: status ?? this.status,
     sermonType: sermonType ?? this.sermonType,
     contentKind: contentKind ?? this.contentKind,
+    backgroundImageId: clearBackgroundImageId
+        ? null
+        : backgroundImageId ?? this.backgroundImageId,
     primaryBibleReference: clearPrimaryBibleReference
         ? null
         : primaryBibleReference ?? this.primaryBibleReference,
     additionalBibleReferences: additionalBibleReferences,
     seriesId: seriesId ?? this.seriesId,
-    seriesPosition: seriesPosition ?? this.seriesPosition,
+    versionRootId: clearVersionRootId
+        ? null
+        : versionRootId ?? this.versionRootId,
+    seriesPosition: clearSeriesPosition
+        ? null
+        : seriesPosition ?? this.seriesPosition,
     topics: topics ?? this.topics,
     tags: tags ?? this.tags,
     audience: audience ?? this.audience,
@@ -145,6 +164,7 @@ class SermonSeries {
     required this.createdAt,
     required this.updatedAt,
     required this.isArchived,
+    this.backgroundImageId = 'generic2',
   });
   final String id;
   final String title;
@@ -154,4 +174,5 @@ class SermonSeries {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isArchived;
+  final String backgroundImageId;
 }

@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sermonary/core/database/app_database.dart';
+import 'package:sermonary/core/database/database_backup_service.dart';
 import 'package:sermonary/features/bible/data/local_bible_provider.dart';
 import 'package:sermonary/features/bible/domain/bible_provider.dart';
-import 'package:sermonary/features/bible/domain/bible_reference.dart';
 import 'package:sermonary/features/export/application/export_service.dart';
+import 'package:sermonary/features/library/application/welcome_sermon_seeder.dart';
 import 'package:sermonary/features/library/data/sermon_repository.dart';
 import 'package:sermonary/features/library/domain/sermon.dart';
-import 'package:sermonary/features/sermon_editor/domain/sermon_document.dart';
-import 'package:uuid/uuid.dart';
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final database = AppDatabase();
   ref.onDispose(database.close);
   return database;
+});
+
+final databaseBackupServiceProvider = FutureProvider<DatabaseBackupService>((
+  ref,
+) async {
+  final directory = await getApplicationDocumentsDirectory();
+  return DatabaseBackupService(
+    dataDirectory: directory,
+    targetSchemaVersion: AppDatabase.currentSchemaVersion,
+  );
 });
 
 final themeModeProvider = StateProvider<ThemeMode>((ref) => ThemeMode.light);
@@ -34,6 +44,31 @@ final sermonsProvider = StreamProvider<List<Sermon>>(
   (ref) => ref.watch(sermonRepositoryProvider).watchAll(),
 );
 
+final sermonSeriesProvider = StreamProvider<List<SermonSeries>>((ref) {
+  final database = ref.watch(databaseProvider);
+  return database.select(database.sermonSeriesRows).watch().map((rows) {
+    final series =
+        rows
+            .where((row) => !row.isArchived)
+            .map(
+              (row) => SermonSeries(
+                id: row.id,
+                title: row.title,
+                description: row.description,
+                primaryBibleBook: row.primaryBibleBook,
+                colorToken: row.colorToken,
+                backgroundImageId: row.backgroundImageId,
+                createdAt: row.createdAt,
+                updatedAt: row.updatedAt,
+                isArchived: row.isArchived,
+              ),
+            )
+            .toList(growable: false)
+          ..sort((left, right) => left.title.compareTo(right.title));
+    return series;
+  });
+});
+
 final StreamProviderFamily<Sermon?, String> sermonProvider =
     StreamProvider.family<Sermon?, String>(
       (ref, id) => ref.watch(sermonRepositoryProvider).watchById(id),
@@ -41,102 +76,7 @@ final StreamProviderFamily<Sermon?, String> sermonProvider =
 
 final bootstrapProvider = FutureProvider<void>((ref) async {
   final database = ref.watch(databaseProvider);
-  await ref.watch(bibleProviderProvider).prepare();
-  if (const bool.fromEnvironment('dart.vm.product')) return;
   final repository = ref.watch(sermonRepositoryProvider);
-  final existing = await database.select(database.sermonRows).get();
-  if (existing.isNotEmpty) {
-    const demoReferences = {
-      'Zu wem sollen wir gehen?': 'Johannes 6,60–71',
-      'Kommt her zu mir': 'Matthäus 11,28–30',
-      'Die erste Liebe': 'Offenbarung 2,1–7',
-    };
-    for (final row in existing) {
-      final sermon = sermonFromRow(row);
-      final referenceText = demoReferences[sermon.title];
-      if (sermon.primaryBibleReference == null && referenceText != null) {
-        await repository.update(
-          sermon.copyWith(
-            primaryBibleReference: BibleReferenceParser().parse(referenceText),
-            subtitle: sermon.subtitle == referenceText ? '' : sermon.subtitle,
-          ),
-        );
-      }
-    }
-    return;
-  }
-  const uuid = Uuid();
-  final examples = [
-    (
-      'Zu wem sollen wir gehen?',
-      SermonStatus.preached,
-      'Johannes 6,60–71',
-      'Vertrauen wächst nicht aus vollständiger Gewissheit, sondern im Bleiben.',
-    ),
-    (
-      'Kommt her zu mir',
-      SermonStatus.inProgress,
-      'Matthäus 11,28–30',
-      'Eine Einladung für Müde: Lasten benennen, Nähe suchen, Ruhe empfangen.',
-    ),
-    (
-      'Die erste Liebe',
-      SermonStatus.draft,
-      'Offenbarung 2,1–7',
-      'Treue Tätigkeit ersetzt nicht die lebendige Beziehung.',
-    ),
-  ];
-  for (final example in examples) {
-    final sermon = await repository.create();
-    final now = DateTime.now().toUtc();
-    await repository.update(
-      sermon.copyWith(
-        title: example.$1,
-        status: example.$2,
-        primaryBibleReference: BibleReferenceParser().parse(example.$3),
-        document: SermonDocument(
-          schemaVersion: 1,
-          blocks: [
-            HeadingBlock(
-              id: uuid.v4(),
-              level: 1,
-              text: 'Leitgedanke',
-              collapsed: false,
-              createdAt: now,
-              updatedAt: now,
-            ),
-            ParagraphBlock(
-              id: uuid.v4(),
-              text: example.$4,
-              semanticRole: ParagraphRole.introduction,
-              createdAt: now,
-              updatedAt: now,
-            ),
-            BulletListBlock(
-              id: uuid.v4(),
-              ordered: false,
-              items: [
-                BulletItem(
-                  id: uuid.v4(),
-                  text: 'Text beobachten',
-                  semanticRole: ParagraphRole.explanation,
-                  collapsed: false,
-                  children: const [],
-                ),
-                BulletItem(
-                  id: uuid.v4(),
-                  text: 'Evangelium entfalten',
-                  semanticRole: ParagraphRole.application,
-                  collapsed: false,
-                  children: const [],
-                ),
-              ],
-              createdAt: now,
-              updatedAt: now,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  await WelcomeSermonSeeder.ensureSeeded(database, repository);
+  await ref.watch(bibleProviderProvider).prepare();
 });

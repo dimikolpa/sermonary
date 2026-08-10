@@ -82,6 +82,18 @@ class $SermonRowsTable extends SermonRows
     requiredDuringInsert: false,
     defaultValue: const Constant('sermon'),
   );
+  static const VerificationMeta _backgroundImageIdMeta = const VerificationMeta(
+    'backgroundImageId',
+  );
+  @override
+  late final GeneratedColumn<String> backgroundImageId =
+      GeneratedColumn<String>(
+        'background_image_id',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _primaryBibleReferenceJsonMeta =
       const VerificationMeta('primaryBibleReferenceJson');
   @override
@@ -135,6 +147,17 @@ class $SermonRowsTable extends SermonRows
   @override
   late final GeneratedColumn<String> seriesId = GeneratedColumn<String>(
     'series_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _versionRootIdMeta = const VerificationMeta(
+    'versionRootId',
+  );
+  @override
+  late final GeneratedColumn<String> versionRootId = GeneratedColumn<String>(
+    'version_root_id',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -336,11 +359,13 @@ class $SermonRowsTable extends SermonRows
     status,
     sermonType,
     contentKind,
+    backgroundImageId,
     primaryBibleReferenceJson,
     additionalBibleReferencesJson,
     documentJson,
     documentPlainText,
     seriesId,
+    versionRootId,
     seriesPosition,
     topicsJson,
     tagsJson,
@@ -425,6 +450,15 @@ class $SermonRowsTable extends SermonRows
         ),
       );
     }
+    if (data.containsKey('background_image_id')) {
+      context.handle(
+        _backgroundImageIdMeta,
+        backgroundImageId.isAcceptableOrUnknown(
+          data['background_image_id']!,
+          _backgroundImageIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('primary_bible_reference_json')) {
       context.handle(
         _primaryBibleReferenceJsonMeta,
@@ -467,6 +501,15 @@ class $SermonRowsTable extends SermonRows
       context.handle(
         _seriesIdMeta,
         seriesId.isAcceptableOrUnknown(data['series_id']!, _seriesIdMeta),
+      );
+    }
+    if (data.containsKey('version_root_id')) {
+      context.handle(
+        _versionRootIdMeta,
+        versionRootId.isAcceptableOrUnknown(
+          data['version_root_id']!,
+          _versionRootIdMeta,
+        ),
       );
     }
     if (data.containsKey('series_position')) {
@@ -626,6 +669,10 @@ class $SermonRowsTable extends SermonRows
         DriftSqlType.string,
         data['${effectivePrefix}content_kind'],
       )!,
+      backgroundImageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}background_image_id'],
+      ),
       primaryBibleReferenceJson: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}primary_bible_reference_json'],
@@ -645,6 +692,10 @@ class $SermonRowsTable extends SermonRows
       seriesId: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}series_id'],
+      ),
+      versionRootId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}version_root_id'],
       ),
       seriesPosition: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
@@ -727,11 +778,13 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
   final String status;
   final String sermonType;
   final String contentKind;
+  final String? backgroundImageId;
   final String? primaryBibleReferenceJson;
   final String additionalBibleReferencesJson;
   final String documentJson;
   final String documentPlainText;
   final String? seriesId;
+  final String? versionRootId;
   final int? seriesPosition;
   final String topicsJson;
   final String tagsJson;
@@ -756,11 +809,13 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     required this.status,
     required this.sermonType,
     required this.contentKind,
+    this.backgroundImageId,
     this.primaryBibleReferenceJson,
     required this.additionalBibleReferencesJson,
     required this.documentJson,
     required this.documentPlainText,
     this.seriesId,
+    this.versionRootId,
     this.seriesPosition,
     required this.topicsJson,
     required this.tagsJson,
@@ -788,6 +843,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     map['status'] = Variable<String>(status);
     map['sermon_type'] = Variable<String>(sermonType);
     map['content_kind'] = Variable<String>(contentKind);
+    if (!nullToAbsent || backgroundImageId != null) {
+      map['background_image_id'] = Variable<String>(backgroundImageId);
+    }
     if (!nullToAbsent || primaryBibleReferenceJson != null) {
       map['primary_bible_reference_json'] = Variable<String>(
         primaryBibleReferenceJson,
@@ -800,6 +858,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     map['document_plain_text'] = Variable<String>(documentPlainText);
     if (!nullToAbsent || seriesId != null) {
       map['series_id'] = Variable<String>(seriesId);
+    }
+    if (!nullToAbsent || versionRootId != null) {
+      map['version_root_id'] = Variable<String>(versionRootId);
     }
     if (!nullToAbsent || seriesPosition != null) {
       map['series_position'] = Variable<int>(seriesPosition);
@@ -843,6 +904,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       status: Value(status),
       sermonType: Value(sermonType),
       contentKind: Value(contentKind),
+      backgroundImageId: backgroundImageId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(backgroundImageId),
       primaryBibleReferenceJson:
           primaryBibleReferenceJson == null && nullToAbsent
           ? const Value.absent()
@@ -853,6 +917,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       seriesId: seriesId == null && nullToAbsent
           ? const Value.absent()
           : Value(seriesId),
+      versionRootId: versionRootId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(versionRootId),
       seriesPosition: seriesPosition == null && nullToAbsent
           ? const Value.absent()
           : Value(seriesPosition),
@@ -899,6 +966,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       status: serializer.fromJson<String>(json['status']),
       sermonType: serializer.fromJson<String>(json['sermonType']),
       contentKind: serializer.fromJson<String>(json['contentKind']),
+      backgroundImageId: serializer.fromJson<String?>(
+        json['backgroundImageId'],
+      ),
       primaryBibleReferenceJson: serializer.fromJson<String?>(
         json['primaryBibleReferenceJson'],
       ),
@@ -908,6 +978,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       documentJson: serializer.fromJson<String>(json['documentJson']),
       documentPlainText: serializer.fromJson<String>(json['documentPlainText']),
       seriesId: serializer.fromJson<String?>(json['seriesId']),
+      versionRootId: serializer.fromJson<String?>(json['versionRootId']),
       seriesPosition: serializer.fromJson<int?>(json['seriesPosition']),
       topicsJson: serializer.fromJson<String>(json['topicsJson']),
       tagsJson: serializer.fromJson<String>(json['tagsJson']),
@@ -941,6 +1012,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       'status': serializer.toJson<String>(status),
       'sermonType': serializer.toJson<String>(sermonType),
       'contentKind': serializer.toJson<String>(contentKind),
+      'backgroundImageId': serializer.toJson<String?>(backgroundImageId),
       'primaryBibleReferenceJson': serializer.toJson<String?>(
         primaryBibleReferenceJson,
       ),
@@ -950,6 +1022,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       'documentJson': serializer.toJson<String>(documentJson),
       'documentPlainText': serializer.toJson<String>(documentPlainText),
       'seriesId': serializer.toJson<String?>(seriesId),
+      'versionRootId': serializer.toJson<String?>(versionRootId),
       'seriesPosition': serializer.toJson<int?>(seriesPosition),
       'topicsJson': serializer.toJson<String>(topicsJson),
       'tagsJson': serializer.toJson<String>(tagsJson),
@@ -977,11 +1050,13 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     String? status,
     String? sermonType,
     String? contentKind,
+    Value<String?> backgroundImageId = const Value.absent(),
     Value<String?> primaryBibleReferenceJson = const Value.absent(),
     String? additionalBibleReferencesJson,
     String? documentJson,
     String? documentPlainText,
     Value<String?> seriesId = const Value.absent(),
+    Value<String?> versionRootId = const Value.absent(),
     Value<int?> seriesPosition = const Value.absent(),
     String? topicsJson,
     String? tagsJson,
@@ -1006,6 +1081,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     status: status ?? this.status,
     sermonType: sermonType ?? this.sermonType,
     contentKind: contentKind ?? this.contentKind,
+    backgroundImageId: backgroundImageId.present
+        ? backgroundImageId.value
+        : this.backgroundImageId,
     primaryBibleReferenceJson: primaryBibleReferenceJson.present
         ? primaryBibleReferenceJson.value
         : this.primaryBibleReferenceJson,
@@ -1014,6 +1092,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     documentJson: documentJson ?? this.documentJson,
     documentPlainText: documentPlainText ?? this.documentPlainText,
     seriesId: seriesId.present ? seriesId.value : this.seriesId,
+    versionRootId: versionRootId.present
+        ? versionRootId.value
+        : this.versionRootId,
     seriesPosition: seriesPosition.present
         ? seriesPosition.value
         : this.seriesPosition,
@@ -1052,6 +1133,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
       contentKind: data.contentKind.present
           ? data.contentKind.value
           : this.contentKind,
+      backgroundImageId: data.backgroundImageId.present
+          ? data.backgroundImageId.value
+          : this.backgroundImageId,
       primaryBibleReferenceJson: data.primaryBibleReferenceJson.present
           ? data.primaryBibleReferenceJson.value
           : this.primaryBibleReferenceJson,
@@ -1065,6 +1149,9 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
           ? data.documentPlainText.value
           : this.documentPlainText,
       seriesId: data.seriesId.present ? data.seriesId.value : this.seriesId,
+      versionRootId: data.versionRootId.present
+          ? data.versionRootId.value
+          : this.versionRootId,
       seriesPosition: data.seriesPosition.present
           ? data.seriesPosition.value
           : this.seriesPosition,
@@ -1110,6 +1197,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
           ..write('status: $status, ')
           ..write('sermonType: $sermonType, ')
           ..write('contentKind: $contentKind, ')
+          ..write('backgroundImageId: $backgroundImageId, ')
           ..write('primaryBibleReferenceJson: $primaryBibleReferenceJson, ')
           ..write(
             'additionalBibleReferencesJson: $additionalBibleReferencesJson, ',
@@ -1117,6 +1205,7 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
           ..write('documentJson: $documentJson, ')
           ..write('documentPlainText: $documentPlainText, ')
           ..write('seriesId: $seriesId, ')
+          ..write('versionRootId: $versionRootId, ')
           ..write('seriesPosition: $seriesPosition, ')
           ..write('topicsJson: $topicsJson, ')
           ..write('tagsJson: $tagsJson, ')
@@ -1146,11 +1235,13 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
     status,
     sermonType,
     contentKind,
+    backgroundImageId,
     primaryBibleReferenceJson,
     additionalBibleReferencesJson,
     documentJson,
     documentPlainText,
     seriesId,
+    versionRootId,
     seriesPosition,
     topicsJson,
     tagsJson,
@@ -1179,12 +1270,14 @@ class SermonRow extends DataClass implements Insertable<SermonRow> {
           other.status == this.status &&
           other.sermonType == this.sermonType &&
           other.contentKind == this.contentKind &&
+          other.backgroundImageId == this.backgroundImageId &&
           other.primaryBibleReferenceJson == this.primaryBibleReferenceJson &&
           other.additionalBibleReferencesJson ==
               this.additionalBibleReferencesJson &&
           other.documentJson == this.documentJson &&
           other.documentPlainText == this.documentPlainText &&
           other.seriesId == this.seriesId &&
+          other.versionRootId == this.versionRootId &&
           other.seriesPosition == this.seriesPosition &&
           other.topicsJson == this.topicsJson &&
           other.tagsJson == this.tagsJson &&
@@ -1211,11 +1304,13 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
   final Value<String> status;
   final Value<String> sermonType;
   final Value<String> contentKind;
+  final Value<String?> backgroundImageId;
   final Value<String?> primaryBibleReferenceJson;
   final Value<String> additionalBibleReferencesJson;
   final Value<String> documentJson;
   final Value<String> documentPlainText;
   final Value<String?> seriesId;
+  final Value<String?> versionRootId;
   final Value<int?> seriesPosition;
   final Value<String> topicsJson;
   final Value<String> tagsJson;
@@ -1241,11 +1336,13 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     this.status = const Value.absent(),
     this.sermonType = const Value.absent(),
     this.contentKind = const Value.absent(),
+    this.backgroundImageId = const Value.absent(),
     this.primaryBibleReferenceJson = const Value.absent(),
     this.additionalBibleReferencesJson = const Value.absent(),
     this.documentJson = const Value.absent(),
     this.documentPlainText = const Value.absent(),
     this.seriesId = const Value.absent(),
+    this.versionRootId = const Value.absent(),
     this.seriesPosition = const Value.absent(),
     this.topicsJson = const Value.absent(),
     this.tagsJson = const Value.absent(),
@@ -1272,11 +1369,13 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     required String status,
     required String sermonType,
     this.contentKind = const Value.absent(),
+    this.backgroundImageId = const Value.absent(),
     this.primaryBibleReferenceJson = const Value.absent(),
     this.additionalBibleReferencesJson = const Value.absent(),
     required String documentJson,
     this.documentPlainText = const Value.absent(),
     this.seriesId = const Value.absent(),
+    this.versionRootId = const Value.absent(),
     this.seriesPosition = const Value.absent(),
     this.topicsJson = const Value.absent(),
     this.tagsJson = const Value.absent(),
@@ -1311,11 +1410,13 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     Expression<String>? status,
     Expression<String>? sermonType,
     Expression<String>? contentKind,
+    Expression<String>? backgroundImageId,
     Expression<String>? primaryBibleReferenceJson,
     Expression<String>? additionalBibleReferencesJson,
     Expression<String>? documentJson,
     Expression<String>? documentPlainText,
     Expression<String>? seriesId,
+    Expression<String>? versionRootId,
     Expression<int>? seriesPosition,
     Expression<String>? topicsJson,
     Expression<String>? tagsJson,
@@ -1342,6 +1443,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
       if (status != null) 'status': status,
       if (sermonType != null) 'sermon_type': sermonType,
       if (contentKind != null) 'content_kind': contentKind,
+      if (backgroundImageId != null) 'background_image_id': backgroundImageId,
       if (primaryBibleReferenceJson != null)
         'primary_bible_reference_json': primaryBibleReferenceJson,
       if (additionalBibleReferencesJson != null)
@@ -1349,6 +1451,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
       if (documentJson != null) 'document_json': documentJson,
       if (documentPlainText != null) 'document_plain_text': documentPlainText,
       if (seriesId != null) 'series_id': seriesId,
+      if (versionRootId != null) 'version_root_id': versionRootId,
       if (seriesPosition != null) 'series_position': seriesPosition,
       if (topicsJson != null) 'topics_json': topicsJson,
       if (tagsJson != null) 'tags_json': tagsJson,
@@ -1379,11 +1482,13 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     Value<String>? status,
     Value<String>? sermonType,
     Value<String>? contentKind,
+    Value<String?>? backgroundImageId,
     Value<String?>? primaryBibleReferenceJson,
     Value<String>? additionalBibleReferencesJson,
     Value<String>? documentJson,
     Value<String>? documentPlainText,
     Value<String?>? seriesId,
+    Value<String?>? versionRootId,
     Value<int?>? seriesPosition,
     Value<String>? topicsJson,
     Value<String>? tagsJson,
@@ -1410,6 +1515,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
       status: status ?? this.status,
       sermonType: sermonType ?? this.sermonType,
       contentKind: contentKind ?? this.contentKind,
+      backgroundImageId: backgroundImageId ?? this.backgroundImageId,
       primaryBibleReferenceJson:
           primaryBibleReferenceJson ?? this.primaryBibleReferenceJson,
       additionalBibleReferencesJson:
@@ -1417,6 +1523,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
       documentJson: documentJson ?? this.documentJson,
       documentPlainText: documentPlainText ?? this.documentPlainText,
       seriesId: seriesId ?? this.seriesId,
+      versionRootId: versionRootId ?? this.versionRootId,
       seriesPosition: seriesPosition ?? this.seriesPosition,
       topicsJson: topicsJson ?? this.topicsJson,
       tagsJson: tagsJson ?? this.tagsJson,
@@ -1463,6 +1570,9 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     if (contentKind.present) {
       map['content_kind'] = Variable<String>(contentKind.value);
     }
+    if (backgroundImageId.present) {
+      map['background_image_id'] = Variable<String>(backgroundImageId.value);
+    }
     if (primaryBibleReferenceJson.present) {
       map['primary_bible_reference_json'] = Variable<String>(
         primaryBibleReferenceJson.value,
@@ -1481,6 +1591,9 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
     }
     if (seriesId.present) {
       map['series_id'] = Variable<String>(seriesId.value);
+    }
+    if (versionRootId.present) {
+      map['version_root_id'] = Variable<String>(versionRootId.value);
     }
     if (seriesPosition.present) {
       map['series_position'] = Variable<int>(seriesPosition.value);
@@ -1550,6 +1663,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
           ..write('status: $status, ')
           ..write('sermonType: $sermonType, ')
           ..write('contentKind: $contentKind, ')
+          ..write('backgroundImageId: $backgroundImageId, ')
           ..write('primaryBibleReferenceJson: $primaryBibleReferenceJson, ')
           ..write(
             'additionalBibleReferencesJson: $additionalBibleReferencesJson, ',
@@ -1557,6 +1671,7 @@ class SermonRowsCompanion extends UpdateCompanion<SermonRow> {
           ..write('documentJson: $documentJson, ')
           ..write('documentPlainText: $documentPlainText, ')
           ..write('seriesId: $seriesId, ')
+          ..write('versionRootId: $versionRootId, ')
           ..write('seriesPosition: $seriesPosition, ')
           ..write('topicsJson: $topicsJson, ')
           ..write('tagsJson: $tagsJson, ')
@@ -1638,6 +1753,19 @@ class $SermonSeriesRowsTable extends SermonSeriesRows
     requiredDuringInsert: false,
     defaultValue: const Constant('forest'),
   );
+  static const VerificationMeta _backgroundImageIdMeta = const VerificationMeta(
+    'backgroundImageId',
+  );
+  @override
+  late final GeneratedColumn<String> backgroundImageId =
+      GeneratedColumn<String>(
+        'background_image_id',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('generic2'),
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -1694,6 +1822,7 @@ class $SermonSeriesRowsTable extends SermonSeriesRows
     description,
     primaryBibleBook,
     colorToken,
+    backgroundImageId,
     createdAt,
     updatedAt,
     isArchived,
@@ -1746,6 +1875,15 @@ class $SermonSeriesRowsTable extends SermonSeriesRows
       context.handle(
         _colorTokenMeta,
         colorToken.isAcceptableOrUnknown(data['color_token']!, _colorTokenMeta),
+      );
+    }
+    if (data.containsKey('background_image_id')) {
+      context.handle(
+        _backgroundImageIdMeta,
+        backgroundImageId.isAcceptableOrUnknown(
+          data['background_image_id']!,
+          _backgroundImageIdMeta,
+        ),
       );
     }
     if (data.containsKey('created_at')) {
@@ -1805,6 +1943,10 @@ class $SermonSeriesRowsTable extends SermonSeriesRows
         DriftSqlType.string,
         data['${effectivePrefix}color_token'],
       )!,
+      backgroundImageId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}background_image_id'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -1836,6 +1978,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
   final String description;
   final String? primaryBibleBook;
   final String colorToken;
+  final String backgroundImageId;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isArchived;
@@ -1846,6 +1989,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
     required this.description,
     this.primaryBibleBook,
     required this.colorToken,
+    required this.backgroundImageId,
     required this.createdAt,
     required this.updatedAt,
     required this.isArchived,
@@ -1861,6 +2005,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
       map['primary_bible_book'] = Variable<String>(primaryBibleBook);
     }
     map['color_token'] = Variable<String>(colorToken);
+    map['background_image_id'] = Variable<String>(backgroundImageId);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['is_archived'] = Variable<bool>(isArchived);
@@ -1877,6 +2022,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
           ? const Value.absent()
           : Value(primaryBibleBook),
       colorToken: Value(colorToken),
+      backgroundImageId: Value(backgroundImageId),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       isArchived: Value(isArchived),
@@ -1895,6 +2041,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
       description: serializer.fromJson<String>(json['description']),
       primaryBibleBook: serializer.fromJson<String?>(json['primaryBibleBook']),
       colorToken: serializer.fromJson<String>(json['colorToken']),
+      backgroundImageId: serializer.fromJson<String>(json['backgroundImageId']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       isArchived: serializer.fromJson<bool>(json['isArchived']),
@@ -1910,6 +2057,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
       'description': serializer.toJson<String>(description),
       'primaryBibleBook': serializer.toJson<String?>(primaryBibleBook),
       'colorToken': serializer.toJson<String>(colorToken),
+      'backgroundImageId': serializer.toJson<String>(backgroundImageId),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'isArchived': serializer.toJson<bool>(isArchived),
@@ -1923,6 +2071,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
     String? description,
     Value<String?> primaryBibleBook = const Value.absent(),
     String? colorToken,
+    String? backgroundImageId,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool? isArchived,
@@ -1935,6 +2084,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
         ? primaryBibleBook.value
         : this.primaryBibleBook,
     colorToken: colorToken ?? this.colorToken,
+    backgroundImageId: backgroundImageId ?? this.backgroundImageId,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     isArchived: isArchived ?? this.isArchived,
@@ -1953,6 +2103,9 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
       colorToken: data.colorToken.present
           ? data.colorToken.value
           : this.colorToken,
+      backgroundImageId: data.backgroundImageId.present
+          ? data.backgroundImageId.value
+          : this.backgroundImageId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       isArchived: data.isArchived.present
@@ -1970,6 +2123,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
           ..write('description: $description, ')
           ..write('primaryBibleBook: $primaryBibleBook, ')
           ..write('colorToken: $colorToken, ')
+          ..write('backgroundImageId: $backgroundImageId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isArchived: $isArchived, ')
@@ -1985,6 +2139,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
     description,
     primaryBibleBook,
     colorToken,
+    backgroundImageId,
     createdAt,
     updatedAt,
     isArchived,
@@ -1999,6 +2154,7 @@ class SermonSeriesRow extends DataClass implements Insertable<SermonSeriesRow> {
           other.description == this.description &&
           other.primaryBibleBook == this.primaryBibleBook &&
           other.colorToken == this.colorToken &&
+          other.backgroundImageId == this.backgroundImageId &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.isArchived == this.isArchived &&
@@ -2011,6 +2167,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
   final Value<String> description;
   final Value<String?> primaryBibleBook;
   final Value<String> colorToken;
+  final Value<String> backgroundImageId;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<bool> isArchived;
@@ -2022,6 +2179,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
     this.description = const Value.absent(),
     this.primaryBibleBook = const Value.absent(),
     this.colorToken = const Value.absent(),
+    this.backgroundImageId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.isArchived = const Value.absent(),
@@ -2034,6 +2192,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
     this.description = const Value.absent(),
     this.primaryBibleBook = const Value.absent(),
     this.colorToken = const Value.absent(),
+    this.backgroundImageId = const Value.absent(),
     required DateTime createdAt,
     required DateTime updatedAt,
     this.isArchived = const Value.absent(),
@@ -2049,6 +2208,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
     Expression<String>? description,
     Expression<String>? primaryBibleBook,
     Expression<String>? colorToken,
+    Expression<String>? backgroundImageId,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<bool>? isArchived,
@@ -2061,6 +2221,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
       if (description != null) 'description': description,
       if (primaryBibleBook != null) 'primary_bible_book': primaryBibleBook,
       if (colorToken != null) 'color_token': colorToken,
+      if (backgroundImageId != null) 'background_image_id': backgroundImageId,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (isArchived != null) 'is_archived': isArchived,
@@ -2075,6 +2236,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
     Value<String>? description,
     Value<String?>? primaryBibleBook,
     Value<String>? colorToken,
+    Value<String>? backgroundImageId,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<bool>? isArchived,
@@ -2087,6 +2249,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
       description: description ?? this.description,
       primaryBibleBook: primaryBibleBook ?? this.primaryBibleBook,
       colorToken: colorToken ?? this.colorToken,
+      backgroundImageId: backgroundImageId ?? this.backgroundImageId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       isArchived: isArchived ?? this.isArchived,
@@ -2112,6 +2275,9 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
     }
     if (colorToken.present) {
       map['color_token'] = Variable<String>(colorToken.value);
+    }
+    if (backgroundImageId.present) {
+      map['background_image_id'] = Variable<String>(backgroundImageId.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -2139,6 +2305,7 @@ class SermonSeriesRowsCompanion extends UpdateCompanion<SermonSeriesRow> {
           ..write('description: $description, ')
           ..write('primaryBibleBook: $primaryBibleBook, ')
           ..write('colorToken: $colorToken, ')
+          ..write('backgroundImageId: $backgroundImageId, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('isArchived: $isArchived, ')
@@ -4519,11 +4686,13 @@ typedef $$SermonRowsTableCreateCompanionBuilder =
       required String status,
       required String sermonType,
       Value<String> contentKind,
+      Value<String?> backgroundImageId,
       Value<String?> primaryBibleReferenceJson,
       Value<String> additionalBibleReferencesJson,
       required String documentJson,
       Value<String> documentPlainText,
       Value<String?> seriesId,
+      Value<String?> versionRootId,
       Value<int?> seriesPosition,
       Value<String> topicsJson,
       Value<String> tagsJson,
@@ -4551,11 +4720,13 @@ typedef $$SermonRowsTableUpdateCompanionBuilder =
       Value<String> status,
       Value<String> sermonType,
       Value<String> contentKind,
+      Value<String?> backgroundImageId,
       Value<String?> primaryBibleReferenceJson,
       Value<String> additionalBibleReferencesJson,
       Value<String> documentJson,
       Value<String> documentPlainText,
       Value<String?> seriesId,
+      Value<String?> versionRootId,
       Value<int?> seriesPosition,
       Value<String> topicsJson,
       Value<String> tagsJson,
@@ -4704,6 +4875,11 @@ class $$SermonRowsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get backgroundImageId => $composableBuilder(
+    column: $table.backgroundImageId,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get primaryBibleReferenceJson => $composableBuilder(
     column: $table.primaryBibleReferenceJson,
     builder: (column) => ColumnFilters(column),
@@ -4726,6 +4902,11 @@ class $$SermonRowsTableFilterComposer
 
   ColumnFilters<String> get seriesId => $composableBuilder(
     column: $table.seriesId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get versionRootId => $composableBuilder(
+    column: $table.versionRootId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4954,6 +5135,11 @@ class $$SermonRowsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get backgroundImageId => $composableBuilder(
+    column: $table.backgroundImageId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get primaryBibleReferenceJson => $composableBuilder(
     column: $table.primaryBibleReferenceJson,
     builder: (column) => ColumnOrderings(column),
@@ -4977,6 +5163,11 @@ class $$SermonRowsTableOrderingComposer
 
   ColumnOrderings<String> get seriesId => $composableBuilder(
     column: $table.seriesId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get versionRootId => $composableBuilder(
+    column: $table.versionRootId,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -5097,6 +5288,11 @@ class $$SermonRowsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get backgroundImageId => $composableBuilder(
+    column: $table.backgroundImageId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get primaryBibleReferenceJson => $composableBuilder(
     column: $table.primaryBibleReferenceJson,
     builder: (column) => column,
@@ -5120,6 +5316,11 @@ class $$SermonRowsTableAnnotationComposer
 
   GeneratedColumn<String> get seriesId =>
       $composableBuilder(column: $table.seriesId, builder: (column) => column);
+
+  GeneratedColumn<String> get versionRootId => $composableBuilder(
+    column: $table.versionRootId,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<int> get seriesPosition => $composableBuilder(
     column: $table.seriesPosition,
@@ -5327,12 +5528,14 @@ class $$SermonRowsTableTableManager
                 Value<String> status = const Value.absent(),
                 Value<String> sermonType = const Value.absent(),
                 Value<String> contentKind = const Value.absent(),
+                Value<String?> backgroundImageId = const Value.absent(),
                 Value<String?> primaryBibleReferenceJson = const Value.absent(),
                 Value<String> additionalBibleReferencesJson =
                     const Value.absent(),
                 Value<String> documentJson = const Value.absent(),
                 Value<String> documentPlainText = const Value.absent(),
                 Value<String?> seriesId = const Value.absent(),
+                Value<String?> versionRootId = const Value.absent(),
                 Value<int?> seriesPosition = const Value.absent(),
                 Value<String> topicsJson = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
@@ -5358,11 +5561,13 @@ class $$SermonRowsTableTableManager
                 status: status,
                 sermonType: sermonType,
                 contentKind: contentKind,
+                backgroundImageId: backgroundImageId,
                 primaryBibleReferenceJson: primaryBibleReferenceJson,
                 additionalBibleReferencesJson: additionalBibleReferencesJson,
                 documentJson: documentJson,
                 documentPlainText: documentPlainText,
                 seriesId: seriesId,
+                versionRootId: versionRootId,
                 seriesPosition: seriesPosition,
                 topicsJson: topicsJson,
                 tagsJson: tagsJson,
@@ -5390,12 +5595,14 @@ class $$SermonRowsTableTableManager
                 required String status,
                 required String sermonType,
                 Value<String> contentKind = const Value.absent(),
+                Value<String?> backgroundImageId = const Value.absent(),
                 Value<String?> primaryBibleReferenceJson = const Value.absent(),
                 Value<String> additionalBibleReferencesJson =
                     const Value.absent(),
                 required String documentJson,
                 Value<String> documentPlainText = const Value.absent(),
                 Value<String?> seriesId = const Value.absent(),
+                Value<String?> versionRootId = const Value.absent(),
                 Value<int?> seriesPosition = const Value.absent(),
                 Value<String> topicsJson = const Value.absent(),
                 Value<String> tagsJson = const Value.absent(),
@@ -5421,11 +5628,13 @@ class $$SermonRowsTableTableManager
                 status: status,
                 sermonType: sermonType,
                 contentKind: contentKind,
+                backgroundImageId: backgroundImageId,
                 primaryBibleReferenceJson: primaryBibleReferenceJson,
                 additionalBibleReferencesJson: additionalBibleReferencesJson,
                 documentJson: documentJson,
                 documentPlainText: documentPlainText,
                 seriesId: seriesId,
+                versionRootId: versionRootId,
                 seriesPosition: seriesPosition,
                 topicsJson: topicsJson,
                 tagsJson: tagsJson,
@@ -5588,6 +5797,7 @@ typedef $$SermonSeriesRowsTableCreateCompanionBuilder =
       Value<String> description,
       Value<String?> primaryBibleBook,
       Value<String> colorToken,
+      Value<String> backgroundImageId,
       required DateTime createdAt,
       required DateTime updatedAt,
       Value<bool> isArchived,
@@ -5601,6 +5811,7 @@ typedef $$SermonSeriesRowsTableUpdateCompanionBuilder =
       Value<String> description,
       Value<String?> primaryBibleBook,
       Value<String> colorToken,
+      Value<String> backgroundImageId,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<bool> isArchived,
@@ -5639,6 +5850,11 @@ class $$SermonSeriesRowsTableFilterComposer
 
   ColumnFilters<String> get colorToken => $composableBuilder(
     column: $table.colorToken,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get backgroundImageId => $composableBuilder(
+    column: $table.backgroundImageId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5697,6 +5913,11 @@ class $$SermonSeriesRowsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get backgroundImageId => $composableBuilder(
+    column: $table.backgroundImageId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -5745,6 +5966,11 @@ class $$SermonSeriesRowsTableAnnotationComposer
 
   GeneratedColumn<String> get colorToken => $composableBuilder(
     column: $table.colorToken,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get backgroundImageId => $composableBuilder(
+    column: $table.backgroundImageId,
     builder: (column) => column,
   );
 
@@ -5805,6 +6031,7 @@ class $$SermonSeriesRowsTableTableManager
                 Value<String> description = const Value.absent(),
                 Value<String?> primaryBibleBook = const Value.absent(),
                 Value<String> colorToken = const Value.absent(),
+                Value<String> backgroundImageId = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<bool> isArchived = const Value.absent(),
@@ -5816,6 +6043,7 @@ class $$SermonSeriesRowsTableTableManager
                 description: description,
                 primaryBibleBook: primaryBibleBook,
                 colorToken: colorToken,
+                backgroundImageId: backgroundImageId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 isArchived: isArchived,
@@ -5829,6 +6057,7 @@ class $$SermonSeriesRowsTableTableManager
                 Value<String> description = const Value.absent(),
                 Value<String?> primaryBibleBook = const Value.absent(),
                 Value<String> colorToken = const Value.absent(),
+                Value<String> backgroundImageId = const Value.absent(),
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 Value<bool> isArchived = const Value.absent(),
@@ -5840,6 +6069,7 @@ class $$SermonSeriesRowsTableTableManager
                 description: description,
                 primaryBibleBook: primaryBibleBook,
                 colorToken: colorToken,
+                backgroundImageId: backgroundImageId,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 isArchived: isArchived,

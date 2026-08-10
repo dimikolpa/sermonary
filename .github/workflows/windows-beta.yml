@@ -1,0 +1,62 @@
+name: Windows Beta
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Quellcode auschecken
+        uses: actions/checkout@v4
+
+      - name: Flutter einrichten
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.6'
+          channel: stable
+          cache: true
+
+      - name: Abhängigkeiten laden
+        run: flutter pub get
+
+      - name: Code analysieren
+        run: flutter analyze
+
+      - name: Tests ausführen
+        run: flutter test
+
+      - name: Windows-Release bauen
+        run: flutter build windows --release
+
+      - name: Portable ZIP erstellen
+        shell: pwsh
+        run: |
+          $version = if ('${{ github.ref_type }}' -eq 'tag') { '${{ github.ref_name }}' } else { 'test-${{ github.run_number }}' }
+          $archive = "Sermonary-$version-Windows-x64.zip"
+          Compress-Archive -Path 'build/windows/x64/runner/Release/*' -DestinationPath $archive
+          "archive=$archive" >> $env:GITHUB_OUTPUT
+        id: package
+
+      - name: ZIP als Build-Artefakt speichern
+        uses: actions/upload-artifact@v4
+        with:
+          name: Sermonary-Windows-x64
+          path: ${{ steps.package.outputs.archive }}
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: GitHub Release erstellen
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create '${{ github.ref_name }}' '${{ steps.package.outputs.archive }}' --title 'Sermonary ${{ github.ref_name }}' --generate-notes

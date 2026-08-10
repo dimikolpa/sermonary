@@ -5,10 +5,11 @@
 // 'flutter create' template.
 
 // The application's name. By default this is also the title of the Flutter window.
-PRODUCT_NAME = sermonary
+PRODUCT_NAME = Sermonary
 
-// The application's bundle identifier
+// FINAL RELEASE IDENTITY. Do not change after beta 0.9.0: macOS derives the
+// persistent sandbox container (and therefore the database location) from it.
 PRODUCT_BUNDLE_IDENTIFIER = app.sermonary.sermonary
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 app.sermonary. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 Sermonary. All rights reserved.

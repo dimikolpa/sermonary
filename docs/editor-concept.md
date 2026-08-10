@@ -39,11 +39,11 @@ Darstellungen schreibgeschützt.
 
 - `Tab` / `Shift+Tab`: Raw-Punkt ein-/ausrücken
 - `Enter`: Punkt auf gleicher Ebene ergänzen
-- `Cmd+Shift+↑/↓`: Punkt verschieben
+- `Cmd+Option+↑/↓`: Punkt verschieben
 - `Cmd+Option+→`: Punkt einklappen
 - `Cmd+1/2/3`: Raw, Script, Live
 - `Cmd+S`: sofort speichern
-- `Cmd+Shift+B`: Bibelblock
+- `Cmd+B`: Bibelblock
 - `Cmd+\`: Outline
 
 Die Kürzel verwenden keine bekannten reservierten globalen macOS-Kombinationen.

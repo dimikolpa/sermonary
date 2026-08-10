@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 0.9.0+1
 
 environment:
   sdk: ^3.12.2
@@ -30,6 +30,7 @@ environment:
 dependencies:
   archive: ^4.0.9
   collection: ^1.19.1
+  crypto: ^3.0.7
   drift: ^2.34.3
   drift_flutter: ^0.3.1
   file_selector: ^1.1.0
@@ -37,11 +38,16 @@ dependencies:
     sdk: flutter
   flutter_riverpod: ^2.6.1
   go_router: ^17.3.0
+  html: ^0.15.6
   intl: ^0.20.3
   json_annotation: ^4.12.0
   lucide_flutter: ^1.25.0
+  path: ^1.9.1
+  path_provider: ^2.1.6
   pdf: ^3.13.0
   printing: ^5.15.0
+  sqlite3: ^3.5.0
+  super_clipboard: ^0.9.1
   uuid: ^4.6.0
 
 dev_dependencies:
@@ -67,7 +73,153 @@ flutter:
 
   assets:
     - assets/bible/elb85.jsonl.gz
-    - assets/images/sermonary-logo.png
+    - assets/brand/
+    - assets/presentation/
+    - assets/images/background/generic1.jpg
+    - assets/images/background/generic2.jpg
+    - assets/images/background/generic3.jpg
+    - assets/images/background/generic4.jpg
+    - assets/images/background/generic5.jpg
+    - assets/images/background/generic6.jpg
+    - assets/images/background/1_1Mose/1mose.jpg
+    - assets/images/background/2_2Mose/2mose.jpg
+    - assets/images/background/3_3Mose/3mose.jpg
+    - assets/images/background/4_4Mose/4mose.jpg
+    - assets/images/background/5_5Mose/5mose.jpg
+    - assets/images/background/6_Josua/josua.jpg
+    - assets/images/background/7_Richter/richter.jpg
+    - assets/images/background/8_Rut/rut.jpg
+    - assets/images/background/9_1Samuel/1samuel.jpg
+    - assets/images/background/10_2Samuel/2samuel.jpg
+    - assets/images/background/11_1Koenige/1koenige.jpg
+    - assets/images/background/12_2Koenige/2koenige.jpg
+    - assets/images/background/13_1Chronik/1chronik.jpg
+    - assets/images/background/14_2Chronik/2chronik.jpg
+    - assets/images/background/15_Esra/esra.jpg
+    - assets/images/background/16_Nehemia/nehemia.jpg
+    - assets/images/background/17_Ester/ester.jpg
+    - assets/images/background/18_Hiob/hiob.jpg
+    - assets/images/background/19_Psalmen/psalmen.jpg
+    - assets/images/background/20_Sprueche/sprueche.jpg
+    - assets/images/background/21_Prediger/prediger.jpg
+    - assets/images/background/22_Hohelied/hohelied.jpg
+    - assets/images/background/23_Jesaja/jesaja.jpg
+    - assets/images/background/24_Jeremia/jeremia.jpg
+    - assets/images/background/25_Klagelieder/klagelieder.jpg
+    - assets/images/background/26_Hesekiel/hesekiel.jpg
+    - assets/images/background/27_Daniel/daniel.jpg
+    - assets/images/background/28_Hosea/hosea.jpg
+    - assets/images/background/29_Joel/joel.jpg
+    - assets/images/background/30_Amos/amos.jpg
+    - assets/images/background/31_Obadja/obadja.jpg
+    - assets/images/background/32_Jona/jona.jpg
+    - assets/images/background/33_Micha/micha.jpg
+    - assets/images/background/34_Nahum/nahum.jpg
+    - assets/images/background/35_Habakuk/habakuk.jpg
+    - assets/images/background/36_Zefanja/zefanja.jpg
+    - assets/images/background/37_Haggai/haggai.jpg
+    - assets/images/background/38_Sacharja/sacharja.jpg
+    - assets/images/background/39_Maleachi/maleachi.jpg
+    - assets/images/background/40_Matthaeus/matthaeus.jpg
+    - assets/images/background/41_Markus/markus.jpg
+    - assets/images/background/42_Lukas/lukas.jpg
+    - assets/images/background/43_Johannes/johannes.jpg
+    - assets/images/background/44_Apostelgeschichte/apostelgeschichte.jpg
+    - assets/images/background/45_Roemer/roemer.jpg
+    - assets/images/background/46_1Korinther/1korinther.jpg
+    - assets/images/background/47_2Korinther/2korinther.jpg
+    - assets/images/background/48_Galater/galater.jpg
+    - assets/images/background/49_Epheser/epheser.jpg
+    - assets/images/background/50_Philipper/philipper.jpg
+    - assets/images/background/51_Kolosser/kolosser.jpg
+    - assets/images/background/52_1Thessalonicher/1thessalonicher.jpg
+    - assets/images/background/53_2Thessalonicher/2thessalonicher.jpg
+    - assets/images/background/54_1Timotheus/1timotheus.jpg
+    - assets/images/background/55_2Timotheus/2timotheus.jpg
+    - assets/images/background/56_Titus/titus.jpg
+    - assets/images/background/57_Philemon/philemon.jpg
+    - assets/images/background/58_Hebraeer/hebraeer.jpg
+    - assets/images/background/59_Jakobus/jakobus.jpg
+    - assets/images/background/60_1Petrus/1petrus.jpg
+    - assets/images/background/61_2Petrus/2petrus.jpg
+    - assets/images/background/62_1Johannes/1johannes.jpg
+    - assets/images/background/63_2Johannes/2johannes.jpg
+    - assets/images/background/64_3Johannes/3johannes.jpg
+    - assets/images/background/65_Judas/judas.jpg
+    - assets/images/background/66_Offenbarung/offenbarung.jpg
+    - assets/images/background_dark/generic1-dark.jpg
+    - assets/images/background_dark/generic2-dark.jpg
+    - assets/images/background_dark/generic3-dark.jpg
+    - assets/images/background_dark/generic4-dark.jpg
+    - assets/images/background_dark/generic5-dark.jpg
+    - assets/images/background_dark/generic6-dark.jpg
+    - assets/images/background_dark/1_1Mose/1mose-dark.jpg
+    - assets/images/background_dark/2_2Mose/2mose-dark.jpg
+    - assets/images/background_dark/3_3Mose/3mose-dark.jpg
+    - assets/images/background_dark/4_4Mose/4mose-dark.jpg
+    - assets/images/background_dark/5_5Mose/5mose-dark.jpg
+    - assets/images/background_dark/6_Josua/josua-dark.jpg
+    - assets/images/background_dark/7_Richter/richter-dark.jpg
+    - assets/images/background_dark/8_Rut/rut-dark.jpg
+    - assets/images/background_dark/9_1Samuel/1samuel-dark.jpg
+    - assets/images/background_dark/10_2Samuel/2samuel-dark.jpg
+    - assets/images/background_dark/11_1Koenige/1koenige-dark.jpg
+    - assets/images/background_dark/12_2Koenige/2koenige-dark.jpg
+    - assets/images/background_dark/13_1Chronik/1chronik-dark.jpg
+    - assets/images/background_dark/14_2Chronik/2chronik-dark.jpg
+    - assets/images/background_dark/15_Esra/esra-dark.jpg
+    - assets/images/background_dark/16_Nehemia/nehemia-dark.jpg
+    - assets/images/background_dark/17_Ester/ester-dark.jpg
+    - assets/images/background_dark/18_Hiob/hiob-dark.jpg
+    - assets/images/background_dark/19_Psalmen/psalmen-dark.jpg
+    - assets/images/background_dark/20_Sprueche/sprueche-dark.jpg
+    - assets/images/background_dark/21_Prediger/prediger-dark.jpg
+    - assets/images/background_dark/22_Hohelied/hohelied-dark.jpg
+    - assets/images/background_dark/23_Jesaja/jesaja-dark.jpg
+    - assets/images/background_dark/24_Jeremia/jeremia-dark.jpg
+    - assets/images/background_dark/25_Klagelieder/klagelieder-dark.jpg
+    - assets/images/background_dark/26_Hesekiel/hesekiel-dark.jpg
+    - assets/images/background_dark/27_Daniel/daniel-dark.jpg
+    - assets/images/background_dark/28_Hosea/hosea-dark.jpg
+    - assets/images/background_dark/29_Joel/joel-dark.jpg
+    - assets/images/background_dark/30_Amos/amos-dark.jpg
+    - assets/images/background_dark/31_Obadja/obadja-dark.jpg
+    - assets/images/background_dark/32_Jona/jona-dark.jpg
+    - assets/images/background_dark/33_Micha/micha-dark.jpg
+    - assets/images/background_dark/34_Nahum/nahum-dark.jpg
+    - assets/images/background_dark/35_Habakuk/habakuk-dark.jpg
+    - assets/images/background_dark/36_Zefanja/zefanja-dark.jpg
+    - assets/images/background_dark/37_Haggai/haggai-dark.jpg
+    - assets/images/background_dark/38_Sacharja/sacharja-dark.jpg
+    - assets/images/background_dark/39_Maleachi/maleachi-dark.jpg
+    - assets/images/background_dark/40_Matthaeus/matthaeus-dark.jpg
+    - assets/images/background_dark/41_Markus/markus-dark.jpg
+    - assets/images/background_dark/42_Lukas/lukas-dark.jpg
+    - assets/images/background_dark/43_Johannes/johannes-dark.jpg
+    - assets/images/background_dark/44_Apostelgeschichte/apostelgeschichte-dark.jpg
+    - assets/images/background_dark/45_Roemer/roemer-dark.jpg
+    - assets/images/background_dark/46_1Korinther/1korinther-dark.jpg
+    - assets/images/background_dark/47_2Korinther/2korinther-dark.jpg
+    - assets/images/background_dark/48_Galater/galater-dark.jpg
+    - assets/images/background_dark/49_Epheser/epheser-dark.jpg
+    - assets/images/background_dark/50_Philipper/philipper-dark.jpg
+    - assets/images/background_dark/51_Kolosser/kolosser-dark.jpg
+    - assets/images/background_dark/52_1Thessalonicher/1thessalonicher-dark.jpg
+    - assets/images/background_dark/53_2Thessalonicher/2thessalonicher-dark.jpg
+    - assets/images/background_dark/54_1Timotheus/1timotheus-dark.jpg
+    - assets/images/background_dark/55_2Timotheus/2timotheus-dark.jpg
+    - assets/images/background_dark/56_Titus/titus-dark.jpg
+    - assets/images/background_dark/57_Philemon/philemon-dark.jpg
+    - assets/images/background_dark/58_Hebraeer/hebraeer-dark.jpg
+    - assets/images/background_dark/59_Jakobus/jakobus-dark.jpg
+    - assets/images/background_dark/60_1Petrus/1petrus-dark.jpg
+    - assets/images/background_dark/61_2Petrus/2petrus-dark.jpg
+    - assets/images/background_dark/62_1Johannes/1johannes-dark.jpg
+    - assets/images/background_dark/63_2Johannes/2johannes-dark.jpg
+    - assets/images/background_dark/64_3Johannes/3johannes-dark.jpg
+    - assets/images/background_dark/65_Judas/judas-dark.jpg
+    - assets/images/background_dark/66_Offenbarung/offenbarung-dark.jpg
+    - assets/images/sermonary-logo-compact.png
 
   fonts:
     - family: DM Sans

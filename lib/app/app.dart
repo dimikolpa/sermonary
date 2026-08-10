@@ -13,13 +13,17 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/library',
-      builder: (context, state) => const SermonWorkspaceScreen(),
+      builder: (context, state) => const SermonWorkspaceScreen(
+        restoreLastSession: true,
+        persistSession: true,
+      ),
     ),
     GoRoute(path: '/trash', redirect: (context, state) => '/library'),
     GoRoute(
       path: '/sermons/:id/outline',
       builder: (context, state) => SermonWorkspaceScreen(
         sermonId: state.pathParameters['id'],
+        persistSession: true,
       ),
     ),
     GoRoute(
@@ -27,6 +31,15 @@ final _router = GoRouter(
       builder: (context, state) => SermonWorkspaceScreen(
         sermonId: state.pathParameters['id'],
         initialView: WorkspaceView.notes,
+        persistSession: true,
+      ),
+    ),
+    GoRoute(
+      path: '/sermons/:id/notes',
+      builder: (context, state) => SermonWorkspaceScreen(
+        sermonId: state.pathParameters['id'],
+        initialView: WorkspaceView.notes,
+        persistSession: true,
       ),
     ),
     GoRoute(
@@ -34,12 +47,26 @@ final _router = GoRouter(
       builder: (context, state) => SermonWorkspaceScreen(
         sermonId: state.pathParameters['id'],
         initialView: WorkspaceView.script,
+        persistSession: true,
+      ),
+    ),
+    GoRoute(
+      path: '/sermons/:id/presentation',
+      builder: (context, state) => SermonWorkspaceScreen(
+        sermonId: state.pathParameters['id'],
+        initialView: WorkspaceView.presentation,
+        persistSession: true,
       ),
     ),
     GoRoute(
       path: '/sermons/:id/live',
-      builder: (context, state) =>
-          LiveModeScreen(sermonId: state.pathParameters['id']!),
+      builder: (context, state) => LiveModeScreen(
+        sermonId: state.pathParameters['id']!,
+        moduleId: state.uri.queryParameters['module'],
+        contentSource: state.uri.queryParameters['source'] == 'notes'
+            ? LiveContentSource.notes
+            : LiveContentSource.script,
+      ),
     ),
     GoRoute(
       path: '/sermons/:id/print',

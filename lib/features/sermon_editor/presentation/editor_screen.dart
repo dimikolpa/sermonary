@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:sermonary/app/app_config.dart';
 import 'package:sermonary/app/providers.dart';
 import 'package:sermonary/app/theme/app_theme.dart';
+import 'package:sermonary/core/platform/keyboard_shortcuts.dart';
 import 'package:sermonary/features/bible/domain/bible_reference.dart';
 import 'package:sermonary/features/library/domain/sermon.dart';
 import 'package:sermonary/features/sermon_editor/domain/outline.dart';
@@ -79,26 +80,15 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
         final sermon = _draft!;
         return CallbackShortcuts(
           bindings: {
-            const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () =>
-                _save(manual: true),
-            const SingleActivator(LogicalKeyboardKey.digit1, meta: true): () =>
+            primaryShortcut(LogicalKeyboardKey.keyS): () => _save(manual: true),
+            primaryShortcut(LogicalKeyboardKey.digit1): () =>
                 _switchMode(EditorMode.raw),
-            const SingleActivator(LogicalKeyboardKey.digit2, meta: true): () =>
+            primaryShortcut(LogicalKeyboardKey.digit2): () =>
                 _switchMode(EditorMode.script),
-            const SingleActivator(
-              LogicalKeyboardKey.digit3,
-              meta: true,
-            ): _openLive,
-            const SingleActivator(
-              LogicalKeyboardKey.backslash,
-              meta: true,
-            ): () =>
+            primaryShortcut(LogicalKeyboardKey.digit3): _openLive,
+            primaryShortcut(LogicalKeyboardKey.backslash): () =>
                 setState(() => _showOutline = !_showOutline),
-            const SingleActivator(
-              LogicalKeyboardKey.keyB,
-              meta: true,
-              shift: true,
-            ): _showBibleDialog,
+            primaryShortcut(LogicalKeyboardKey.keyB): _showBibleDialog,
           },
           child: Focus(
             autofocus: true,
@@ -145,7 +135,7 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
                     showSelectedIcon: false,
                   ),
                   IconButton(
-                    tooltip: 'Livemode (⌘3)',
+                    tooltip: 'Livemode (${primaryShortcutModifier}3)',
                     onPressed: _openLive,
                     icon: const Icon(Icons.play_circle_outline, size: 19),
                   ),
@@ -393,6 +383,8 @@ class _EditorScreenState extends ConsumerState<EditorScreen> {
     _setDocument(
       SermonDocument(
         schemaVersion: _draft!.document.schemaVersion,
+        modules: _draft!.document.effectiveModules,
+        presentation: _draft!.document.presentation,
         blocks: [
           ..._draft!.document.blocks,
           BibleQuoteBlock(
@@ -449,7 +441,7 @@ class _RawEditor extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Tab einrücken · ⇧Tab ausrücken · ⌘⇧↑/↓ verschieben',
+                'Tab einrücken · ⇧Tab ausrücken · ⌘⌥↑/↓ verschieben',
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -552,7 +544,12 @@ class _RawEditor extends StatelessWidget {
       blocks[rawIndex] = block;
     }
     onChanged(
-      SermonDocument(schemaVersion: document.schemaVersion, blocks: blocks),
+      SermonDocument(
+        schemaVersion: document.schemaVersion,
+        modules: document.effectiveModules,
+        presentation: document.presentation,
+        blocks: blocks,
+      ),
     );
   }
 }
@@ -611,7 +608,7 @@ class _RawLineFieldState extends State<_RawLineField> {
           widget.onOutdent();
           return KeyEventResult.handled;
         }
-        if (keyboard.isMetaPressed && keyboard.isShiftPressed) {
+        if (isPrimaryShortcutPressed && keyboard.isAltPressed) {
           if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
             widget.onMove(-1);
             return KeyEventResult.handled;
@@ -621,7 +618,7 @@ class _RawLineFieldState extends State<_RawLineField> {
             return KeyEventResult.handled;
           }
         }
-        if (keyboard.isMetaPressed &&
+        if (isPrimaryShortcutPressed &&
             keyboard.isAltPressed &&
             event.logicalKey == LogicalKeyboardKey.arrowRight) {
           widget.onCollapse();
@@ -645,6 +642,9 @@ class _RawLineFieldState extends State<_RawLineField> {
               key: Key('raw-line-${widget.line.id}'),
               controller: _controller,
               focusNode: _focusNode,
+              minLines: 1,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
               decoration: const InputDecoration(
                 isDense: true,
                 filled: false,
@@ -788,6 +788,8 @@ class _ScriptEditor extends StatelessWidget {
     onChanged(
       SermonDocument(
         schemaVersion: document.schemaVersion,
+        modules: document.effectiveModules,
+        presentation: document.presentation,
         blocks: [...document.blocks, block],
       ),
     );
@@ -796,6 +798,8 @@ class _ScriptEditor extends StatelessWidget {
   void _replaceBlock(String id, DocumentBlock block) => onChanged(
     SermonDocument(
       schemaVersion: document.schemaVersion,
+      modules: document.effectiveModules,
+      presentation: document.presentation,
       blocks: [
         for (final candidate in document.blocks)
           if (candidate.id == id) block else candidate,
@@ -806,6 +810,8 @@ class _ScriptEditor extends StatelessWidget {
   void _deleteBlock(String id) => onChanged(
     SermonDocument(
       schemaVersion: document.schemaVersion,
+      modules: document.effectiveModules,
+      presentation: document.presentation,
       blocks: document.blocks
           .where((candidate) => candidate.id != id)
           .toList(growable: false),
@@ -856,7 +862,7 @@ class _FormatBar extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           IconButton(
-            tooltip: 'Bibelstelle einfügen (⌘⇧B)',
+            tooltip: 'Bibelstelle einfügen (${primaryShortcutModifier}B)',
             onPressed: onInsertBible,
             icon: const Icon(Icons.menu_book_outlined),
           ),
@@ -1075,6 +1081,9 @@ class _ScriptBlockFieldState extends State<_ScriptBlockField> {
         id: block.id,
         text: text,
         visibility: block.visibility,
+        depth: block.depth,
+        isQuickNote: block.isQuickNote,
+        marks: block.marks,
         createdAt: block.createdAt,
         updatedAt: now,
       ),
@@ -1120,8 +1129,7 @@ class _OutlinePanel extends StatelessWidget {
                               children: [
                                 Text(
                                   entry.title,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                  softWrap: true,
                                   style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w500,
@@ -1179,7 +1187,7 @@ class _MetadataInspector extends StatelessWidget {
           initialValue: sermon.primaryBibleReference?.displayText ?? '',
           decoration: const InputDecoration(labelText: 'Hauptbibelstelle'),
           onChanged: (value) {
-            final parsed = BibleReferenceParser().parse(value);
+            final parsed = BibleReferenceParser().parsePassage(value);
             if (parsed != null) {
               onChanged(sermon.copyWith(primaryBibleReference: parsed));
             }

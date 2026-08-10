@@ -29,6 +29,30 @@ void main() {
     expect(parser.parse('Johannes'), isNull);
   });
 
+  test('normalizes complete sermon passages with comma or colon', () {
+    final sameChapter = parser.parsePassage('Johannes 2:3-5');
+    expect(sameChapter, isNotNull);
+    expect(sameChapter!.startChapter, 2);
+    expect(sameChapter.startVerse, 3);
+    expect(sameChapter.endChapter, 2);
+    expect(sameChapter.endVerse, 5);
+    expect(sameChapter.displayText, 'Johannes 2,3-5');
+
+    final crossChapter = parser.parsePassage('Johannes 2,4-4,1');
+    expect(crossChapter, isNotNull);
+    expect(crossChapter!.startChapter, 2);
+    expect(crossChapter.startVerse, 4);
+    expect(crossChapter.endChapter, 4);
+    expect(crossChapter.endVerse, 1);
+    expect(crossChapter.displayText, 'Johannes 2,4-4,1');
+  });
+
+  test('complete sermon passages reject chapters without verses', () {
+    expect(parser.parsePassage('Johannes 2'), isNull);
+    expect(parser.parsePassage('Johannes 2-4'), isNull);
+    expect(parser.parsePassage('Johannes 2,5-2,4'), isNull);
+  });
+
   test('catalog preserves canonical Bible order', () {
     expect(
       BibleBookCatalog.orderOf('gen'),

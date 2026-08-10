@@ -23,10 +23,12 @@ class BibleTextImporter {
     if (source.trim().isEmpty) return null;
 
     final verses = <int>[];
-    var text = source.replaceAll(RegExp(r'\[[^\]\r\n]*\]'), '');
+    // BibleServer footnotes such as "[10]" are removed. Textual additions in
+    // square brackets are part of the Bible text and must be preserved.
+    var text = source.replaceAll(RegExp(r'\[\s*\d+\s*\]'), '');
     text = text.replaceAllMapped(
       RegExp(
-        r'(^|[\r\n\u2000-\u200B\u2028\u2029]|[.!?;:][ \t]+)(\d{1,3})[\u00A0\u202F \t]+',
+        r'(^|[\r\n\u2000-\u200B\u2028\u2029]|[.!?;:][ \t]+)(\d{1,3}):?[\u00A0\u202F \t]+',
         multiLine: true,
       ),
       (match) {

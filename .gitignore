@@ -33,6 +33,17 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Local source and working material that is not part of the application build.
+/imports/
+/translate/
+/tmp/
+__pycache__/
+
+# The app uses the optimized JPG backgrounds. Keep the much larger PNG source
+# files locally without uploading them to the repository or build service.
+/assets/images/background/**/*.png
+/assets/images/background_dark/**/*.png
+
 # Symbolication related
 app.*.symbols
 

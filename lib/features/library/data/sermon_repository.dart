@@ -15,6 +15,8 @@ abstract interface class SermonRepository {
   Future<void> restore(String id);
   Future<void> deletePermanently(String id);
   Future<Sermon> duplicate(String id);
+  Future<void> attachAsVersion(String draggedId, String targetId);
+  Future<void> detachVersion(String id);
   Future<void> saveVersion(String id, String reason);
 }
 
@@ -57,7 +59,10 @@ class DriftSermonRepository implements SermonRepository {
       isFavorite: false,
       isDeleted: false,
       revision: 1,
-      document: const SermonDocument(schemaVersion: 1, blocks: []),
+      document: const SermonDocument(
+        schemaVersion: SermonDocument.currentSchemaVersion,
+        blocks: [],
+      ),
     );
     await database.into(database.sermonRows).insert(sermonToCompanion(sermon));
     return sermon;
@@ -65,7 +70,19 @@ class DriftSermonRepository implements SermonRepository {
 
   @override
   Future<void> update(Sermon sermon) async {
+    final document = sermon.document.migrateToV2(
+      sermonId: sermon.id,
+      fallbackCreatedAt: sermon.createdAt,
+    );
+    final integrityIssues = document.validateV2();
+    if (integrityIssues.isNotEmpty) {
+      throw StateError(
+        'Das Predigtdokument ist inkonsistent: '
+        '${integrityIssues.map((issue) => issue.message).join(' | ')}',
+      );
+    }
     final next = sermon.copyWith(
+      document: document,
       updatedAt: DateTime.now().toUtc(),
       revision: sermon.revision + 1,
     );
@@ -99,12 +116,18 @@ class DriftSermonRepository implements SermonRepository {
   @override
   Future<void> moveToTrash(String id) async {
     final row = await _row(id);
-    await update(
-      sermonFromRow(row).copyWith(
-        isDeleted: true,
-        deletedAt: DateTime.now().toUtc(),
-      ),
-    );
+    final sermon = sermonFromRow(row);
+    await database.transaction(() async {
+      if (sermon.versionRootId == null) {
+        await _detachVersions(id);
+      }
+      await update(
+        sermon.copyWith(
+          isDeleted: true,
+          deletedAt: DateTime.now().toUtc(),
+        ),
+      );
+    });
   }
 
   @override
@@ -119,9 +142,11 @@ class DriftSermonRepository implements SermonRepository {
       status: sermon.status,
       sermonType: sermon.sermonType,
       contentKind: sermon.contentKind,
+      backgroundImageId: sermon.backgroundImageId,
       primaryBibleReference: sermon.primaryBibleReference,
       additionalBibleReferences: sermon.additionalBibleReferences,
       seriesId: sermon.seriesId,
+      versionRootId: sermon.versionRootId,
       seriesPosition: sermon.seriesPosition,
       topics: sermon.topics,
       tags: sermon.tags,
@@ -145,6 +170,7 @@ class DriftSermonRepository implements SermonRepository {
   @override
   Future<void> deletePermanently(String id) async {
     await database.transaction(() async {
+      await _detachVersions(id);
       await (database.delete(
         database.documentVersions,
       )..where((row) => row.sermonId.equals(id))).go();
@@ -167,35 +193,75 @@ class DriftSermonRepository implements SermonRepository {
   Future<Sermon> duplicate(String id) async {
     final original = sermonFromRow(await _row(id));
     final now = DateTime.now().toUtc();
+    final rootId = original.versionRootId ?? original.id;
     final copy = Sermon(
       id: _uuid.v4(),
       schemaVersion: original.schemaVersion,
-      title: '${original.title} – Kopie',
+      title: original.title,
       subtitle: original.subtitle,
-      status: SermonStatus.draft,
+      status: original.status,
       sermonType: original.sermonType,
       contentKind: original.contentKind,
+      backgroundImageId: original.backgroundImageId,
       primaryBibleReference: original.primaryBibleReference,
       additionalBibleReferences: original.additionalBibleReferences,
       seriesId: original.seriesId,
+      versionRootId: rootId,
       seriesPosition: original.seriesPosition,
       topics: original.topics,
       tags: original.tags,
       audience: original.audience,
       location: original.location,
       scheduledAt: original.scheduledAt,
-      preachedDates: const [],
+      preachedDates: original.preachedDates,
       plannedDurationMinutes: original.plannedDurationMinutes,
+      actualDurationMinutes: original.actualDurationMinutes,
       createdAt: now,
       updatedAt: now,
       lastOpenedAt: now,
-      isFavorite: false,
+      isFavorite: original.isFavorite,
       isDeleted: false,
       revision: 1,
       document: original.document,
     );
     await database.into(database.sermonRows).insert(sermonToCompanion(copy));
     return copy;
+  }
+
+  @override
+  Future<void> attachAsVersion(String draggedId, String targetId) async {
+    if (draggedId == targetId) return;
+    await database.transaction(() async {
+      final dragged = await _row(draggedId);
+      final target = await _row(targetId);
+      final requestedRootId = target.versionRootId ?? target.id;
+      final rootExists = await (database.select(
+        database.sermonRows,
+      )..where((row) => row.id.equals(requestedRootId))).getSingleOrNull();
+      final rootId = rootExists == null ? target.id : requestedRootId;
+
+      // Dropping an original onto one of its own versions must never create
+      // a cycle. It is already the root of that family, so there is no change.
+      if (rootId == dragged.id || dragged.versionRootId == rootId) return;
+
+      final previousChildren = await (database.select(
+        database.sermonRows,
+      )..where((row) => row.versionRootId.equals(dragged.id))).get();
+      final now = DateTime.now().toUtc();
+      await _writeVersionRoot(dragged, rootId, now);
+      for (final child in previousChildren) {
+        await _writeVersionRoot(child, rootId, now);
+      }
+    });
+  }
+
+  @override
+  Future<void> detachVersion(String id) async {
+    await database.transaction(() async {
+      final sermon = await _row(id);
+      if (sermon.versionRootId == null) return;
+      await _writeVersionRoot(sermon, null, DateTime.now().toUtc());
+    });
   }
 
   @override
@@ -217,4 +283,27 @@ class DriftSermonRepository implements SermonRepository {
   Future<SermonRow> _row(String id) => (database.select(
     database.sermonRows,
   )..where((row) => row.id.equals(id))).getSingle();
+
+  Future<void> _writeVersionRoot(
+    SermonRow sermon,
+    String? rootId,
+    DateTime now,
+  ) =>
+      (database.update(
+        database.sermonRows,
+      )..where((row) => row.id.equals(sermon.id))).write(
+        SermonRowsCompanion(
+          versionRootId: Value(rootId),
+          updatedAt: Value(now),
+          revision: Value(sermon.revision + 1),
+        ),
+      );
+
+  Future<void> _detachVersions(String rootId) async {
+    await (database.update(
+      database.sermonRows,
+    )..where((row) => row.versionRootId.equals(rootId))).write(
+      const SermonRowsCompanion(versionRootId: Value(null)),
+    );
+  }
 }
