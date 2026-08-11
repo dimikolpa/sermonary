@@ -33,6 +33,10 @@ const _testSeriesBackgroundIds = {
   'generic6',
 };
 
+final LogicalKeyboardKey _primaryModifierKey = Platform.isMacOS
+    ? LogicalKeyboardKey.metaLeft
+    : LogicalKeyboardKey.controlLeft;
+
 String _outlineAssetName(WidgetTester tester) {
   final container = tester.widget<Container>(
     find.byKey(const Key('outline-notebook-background')),
@@ -3279,9 +3283,9 @@ void main() {
           widget is TextField && widget.controller?.text == 'Einfügepunkt',
     );
     await tester.tap(insertionField);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyDownEvent(_primaryModifierKey);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyUpEvent(_primaryModifierKey);
     await _sendCommandKey(tester, LogicalKeyboardKey.keyV);
     await tester.pump(const Duration(milliseconds: 800));
 
@@ -3371,9 +3375,9 @@ void main() {
           widget is TextField && widget.controller?.text == 'Einfügepunkt',
     );
     await tester.tap(insertionField);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyDownEvent(_primaryModifierKey);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyUpEvent(_primaryModifierKey);
     await _sendCommandKey(tester, LogicalKeyboardKey.keyV);
     await tester.pump(const Duration(milliseconds: 800));
 
@@ -3523,9 +3527,9 @@ void main() {
     );
     await tester.tap(first);
     final firstController = tester.widget<TextField>(first).controller!;
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyDownEvent(_primaryModifierKey);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyUpEvent(_primaryModifierKey);
     await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
     await tester.pump();
     expect(firstController.text, isEmpty);
@@ -4999,9 +5003,9 @@ void main() {
           widget is TextField && widget.controller?.text == 'Gelb fett kursiv',
     );
     await tester.tap(quote);
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyDownEvent(_primaryModifierKey);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyUpEvent(_primaryModifierKey);
     await tester.pump();
     expect(find.byTooltip('Markieren'), findsOneWidget);
     expect(find.byTooltip('Markierungen entfernen'), findsOneWidget);
@@ -6261,9 +6265,9 @@ void main() {
     await _sendCommandKey(tester, LogicalKeyboardKey.keyB);
 
     await tester.tap(richField('Erster Absatz'));
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyDownEvent(_primaryModifierKey);
     await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyUpEvent(_primaryModifierKey);
     await _sendCommandKey(tester, LogicalKeyboardKey.keyM);
     await tester.pump(const Duration(milliseconds: 800));
 
@@ -6510,7 +6514,7 @@ Future<void> _sendCommandKey(
   bool option = false,
   bool shift = false,
 }) async {
-  await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+  await tester.sendKeyDownEvent(_primaryModifierKey);
   if (option) {
     await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
   }
@@ -6524,7 +6528,7 @@ Future<void> _sendCommandKey(
   if (option) {
     await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
   }
-  await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+  await tester.sendKeyUpEvent(_primaryModifierKey);
   await tester.pump();
 }
 
